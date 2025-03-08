@@ -13,7 +13,7 @@ class ScholarshipFormSeeder extends Seeder
         // Create a sample PDF file
         $content = "This is a sample scholarship application form.";
         $fileName = 'sample_scholarship_form.pdf';
-        Storage::disk('public')->put($fileName, $content);
+        Storage::disk('private')->put($fileName, $content);
 
         ScholarshipForm::create([
             'name' => 'Default Scholarship Application Form',
