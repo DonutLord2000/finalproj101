@@ -68,28 +68,30 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'profile_picture' => 'nullable|image|max:1024',
+            'profile_picture' => 'nullable|image|max:2048',
             'cover_picture' => 'nullable|image|max:2048',
             'address' => 'nullable|string|max:255',
-            'contact_number' => 'nullable|string|max:20',
+            'contact_number' => 'nullable|string|max:11',
             'bio' => 'nullable|string|max:1000',
         ]);
 
         $user = auth()->user();
         $profile = $user->profile ?? new Profile(['user_id' => $user->id]);
 
+        // Handle profile picture upload to S3
         if ($request->hasFile('profile_picture')) {
             if ($profile->profile_picture) {
-                Storage::delete($profile->profile_picture);
+                Storage::disk('s3')->delete($profile->profile_picture);
             }
-            $profile->profile_picture = $request->file('profile_picture')->store('profile-pictures', 'public');
+            $profile->profile_picture = $request->file('profile_picture')->store('profile-pictures', 's3');
         }
 
+        // Handle cover picture upload to S3
         if ($request->hasFile('cover_picture')) {
             if ($profile->cover_picture) {
-                Storage::delete($profile->cover_picture);
+                Storage::disk('s3')->delete($profile->cover_picture);
             }
-            $profile->cover_picture = $request->file('cover_picture')->store('cover-pictures', 'public');
+            $profile->cover_picture = $request->file('cover_picture')->store('cover-pictures', 's3');
         }
 
         $profile->fill($request->only(['address', 'contact_number', 'bio']));

@@ -12,7 +12,7 @@
                         <!-- Cover Photo -->
                         <div class="h-60 w-full bg-gray-300 relative rounded-lg">
                             @if($user->profile?->cover_picture)
-                                <img src="{{ Storage::url($user->profile->cover_picture) }}" 
+                                <img src="{{ Storage::disk('s3')->url($user->profile->cover_picture) }}" 
                                     alt="Cover photo" 
                                     class="w-full h-full object-cover rounded-t-lg">
                             @endif
@@ -36,7 +36,7 @@
                         <div class="absolute -bottom-16 left-6">
                             <div class="relative">
                                 <div class="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden">
-                                    <img src="{{ $user->profile?->profile_picture ? Storage::url($user->profile->profile_picture) : $user->profile_photo_url }}"
+                                    <img src="{{ Storage::disk('s3')->url($user->profile->profile_picture) }}"
                                         alt="{{ $user->name }}"
                                         class="w-full h-full object-cover">
                                 </div>
