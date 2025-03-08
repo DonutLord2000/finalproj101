@@ -24,7 +24,6 @@ return new class extends Migration {
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
             'remember_token' => null,
-            'current_team_id' => null,
             'profile_photo_path' => null,
             'created_at' => Carbon::parse('2024-11-28 14:52:16'),
             'updated_at' => Carbon::parse('2024-11-28 14:52:16'),
