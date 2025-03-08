@@ -19,7 +19,6 @@ return new class extends Migration {
             'email' => 'admin@example.com', // Change this if needed
             'email_verified_at' => Carbon::parse('2024-11-28 14:52:16'),
             'role' => 'admin',
-            'student_id' => '2110928',
             'password' => Hash::make('admin123'), // Secure hashed password
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
