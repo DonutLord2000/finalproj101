@@ -17,9 +17,11 @@
                     <!-- Profile Picture -->
                     <div class="absolute -bottom-16 left-6">
                         <div class="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden">
-                            <img src="{{ $user->profile?->profile_picture ? Storage::url($user->profile->profile_picture) : $user->profile_photo_url }}"
-                                alt="{{ $user->name }}"
-                                class="w-full h-full object-cover">
+                            @if($user->profile?->profile_picture)
+                                <img src="{{ Storage::url($user->profile->profile_picture) }}"
+                                    alt="{{ $user->name }}"
+                                    class="w-full h-full object-cover">
+                            @endif
                         </div>
                     </div>
                 </div>
