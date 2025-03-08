@@ -12,11 +12,10 @@
                         <!-- Cover Photo -->
                         <div class="h-60 w-full bg-gray-300 relative rounded-lg">
                             @if($user->profile?->cover_picture)
-                                <img src="{{ $user->profile->cover_picture }}" 
+                                <img src="{{ Storage::url($user->profile->cover_picture) }}" 
                                     alt="Cover photo" 
                                     class="w-full h-full object-cover rounded-t-lg">
                             @endif
-                            <!-- Change Cover Button -->
                             <label for="cover_upload" class="absolute right-4 bottom-4 cursor-pointer">
                                 <span class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,7 +28,7 @@
                             <form id="cover-form" action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="hidden">
                                 @csrf
                                 @method('PUT')
-                                <input type="file" id="cover_upload" name="cover_picture" class="hidden" accept="image/*" onchange="document.getElementById('cover-form').submit();">
+                                <input type="file" id="cover_upload" name="cover_picture" class="hidden" onchange="this.form.submit()">
                             </form>
                         </div>
 
@@ -37,11 +36,10 @@
                         <div class="absolute -bottom-16 left-6">
                             <div class="relative">
                                 <div class="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden">
-                                    <img src="{{ $user->profile?->profile_picture ? $user->profile->profile_picture}}"
+                                    <img src="{{ $user->profile?->profile_picture ? Storage::url($user->profile->profile_picture) : $user->profile_photo_url }}"
                                         alt="{{ $user->name }}"
                                         class="w-full h-full object-cover">
                                 </div>
-                                <!-- Change Profile Picture Button -->
                                 <label for="profile_upload" class="absolute bottom-0 right-0 cursor-pointer">
                                     <span class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -52,12 +50,11 @@
                                 <form id="profile-form" action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="hidden">
                                     @csrf
                                     @method('PUT')
-                                    <input type="file" id="profile_upload" name="profile_picture" class="hidden" accept="image/*" onchange="document.getElementById('profile-form').submit();">
+                                    <input type="file" id="profile_upload" name="profile_picture" class="hidden" onchange="this.form.submit()">
                                 </form>
                             </div>
                         </div>
                     </div>
-
                     <!-- Profile Info -->
                     <div class="pt-20 px-6 pb-6">
                         <div class="flex items-start justify-between">
