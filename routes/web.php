@@ -72,7 +72,7 @@ Route::middleware(['verified'])->group(function () {
     Route::resource('threads', ThreadController::class);
 });
 
-Route::middleware(['auth' , 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::post('/chatbot', [ChatbotController::class, 'chat']);
 });
 
