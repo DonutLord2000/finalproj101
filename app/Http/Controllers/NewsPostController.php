@@ -16,6 +16,7 @@ class NewsPostController extends Controller
     {
         $this->activityLogService = $activityLogService;
     }
+    
     public function index()
     {
         $posts = NewsPost::where(function($query) {
@@ -49,30 +50,39 @@ class NewsPostController extends Controller
             'video' => 'nullable|mimetypes:video/avi,video/mpeg,video/quicktime,video/mp4|max:20480',
         ]);
 
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('news_images', 'public');
-            $validated['image'] = $imagePath;
+        try {
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('news_images', $filename, 's3');
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $validated['image'] = $path;
+            }
+
+            if ($request->hasFile('video')) {
+                $file = $request->file('video');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('news_videos', $filename, 's3');
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $validated['video'] = $path;
+            }
+
+            $post = NewsPost::create($validated);
+            $this->activityLogService->log('news', action: 'Created a post: ' . $post->title);
+
+            return redirect()->route('news.index')->with('success', 'News post created successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error uploading files: ' . $e->getMessage());
         }
-
-        if ($request->hasFile('video')) {
-            $videoPath = $request->file('video')->store('news_videos', 'public');
-            $validated['video'] = $videoPath;
-        }
-
-        $post = NewsPost::create($validated);
-
-        $this->activityLogService->log('news', action: 'Created a post: ' . $post->title);
-
-        return redirect()->route('news.index')->with('success', 'News post created successfully.');
     }
 
     public function destroy(NewsPost $post)
     {
         if ($post->image) {
-            Storage::disk('public')->delete($post->image);
+            Storage::disk('s3')->delete($post->image);
         }
         if ($post->video) {
-            Storage::disk('public')->delete($post->video);
+            Storage::disk('s3')->delete($post->video);
         }
         $post->delete();
 
@@ -99,17 +109,17 @@ class NewsPostController extends Controller
 
         if ($request->hasFile('image')) {
             if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+                Storage::disk('s3')->delete($post->image);
             }
-            $imagePath = $request->file('image')->store('news_images', 'public');
+            $imagePath = $request->file('image')->store('news_images', 's3');
             $validated['image'] = $imagePath;
         }
 
         if ($request->hasFile('video')) {
             if ($post->video) {
-                Storage::disk('public')->delete($post->video);
+                Storage::disk('s3')->delete($post->video);
             }
-            $videoPath = $request->file('video')->store('news_videos', 'public');
+            $videoPath = $request->file('video')->store('news_videos', 's3');
             $validated['video'] = $videoPath;
         }
 

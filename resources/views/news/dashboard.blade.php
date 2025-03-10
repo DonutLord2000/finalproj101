@@ -37,11 +37,17 @@
                         </div>
                             <div class="p-4 pl-12">
                                 @if($post->image)
-                                    <img src="{{ Storage::url($post->image) }}" alt="News post image" class="mb-2 mt-2 mr-4 rounded-lg" style="max-width: 40rem; max-height: 24rem; object-contain;">
+                                    <img 
+                                        src="{{ Storage::disk('s3')->temporaryUrl($post->image, now()->addMinutes(5)) }}"
+                                        alt="News post image" 
+                                        class="mb-2 mt-2 mr-4 rounded-lg" 
+                                        style="max-width: 40rem; max-height: 24rem; object-fit: contain;"
+                                        onerror="this.onerror=null; this.src='/images/placeholder-image.png'; this.alt='Image not available'"
+                                    >
                                 @endif
                                 @if($post->video)
                                     <video controls class="w-full h-auto mb-4 rounded-lg">
-                                        <source src="{{ Storage::url($post->video) }}" type="video/mp4">
+                                        <source src="{{ Storage::disk('s3')->temporaryUrl($post->video, now()->addMinutes(5)) }}" type="video/mp4">
                                         Your browser does not support the video tag.
                                     </video>
                                 @endif

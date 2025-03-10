@@ -42,7 +42,7 @@
                             <x-label for="image" value="{{ __('Image') }}" />
                             <input id="image" type="file" name="image" class="mt-1">
                             @if($post->image)
-                                <img src="{{ Storage::url($post->image) }}" alt="Current image" class="mt-2" style="max-width: 200px;">
+                                <img src="{{ Storage::disk('s3')->url($post->image) }}" alt="Current image" class="mt-2" style="max-width: 200px;">
                             @endif
                         </div>
 
@@ -51,7 +51,7 @@
                             <input id="video" type="file" name="video" class="mt-1">
                             @if($post->video)
                                 <video controls class="mt-2" style="max-width: 200px;">
-                                    <source src="{{ Storage::url($post->video) }}" type="video/mp4">
+                                    <source src="{{ Storage::disk('s3')->url($post->video) }}" type="video/mp4">
                                     Your browser does not support the video tag.
                                 </video>
                             @endif
@@ -68,4 +68,3 @@
         </div>
     </div>
 </x-app-layout>
-
