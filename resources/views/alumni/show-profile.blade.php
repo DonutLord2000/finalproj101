@@ -8,9 +8,9 @@
                     <!-- Cover Photo -->
                     <div class="h-60 w-full bg-gray-300 rounded-t-lg">
                         @if($user->profile?->cover_picture)
-                            <img src="{{ Storage::disk('s3')->url($user->profile->cover_picture) }}" 
-                                alt="Cover photo" 
-                                class="w-full h-full object-cover rounded-t-lg">
+                        <img src="{{ $user->profile?->cover_picture_url }}" 
+                            alt="Cover photo" 
+                            class="w-full h-full object-cover rounded-t-lg">
                         @endif
                     </div>
 

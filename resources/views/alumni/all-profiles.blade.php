@@ -39,7 +39,7 @@
                         @foreach($profiles as $profile)
                             <a href="{{ route('alumni.profile.show', $profile->id) }}"
                                 class="block bg-gradient-to-b from-gray-300 to-gray-100 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-6">
-                                <img src="{{ $profile->profile?->profile_picture ? Storage::disk('s3')->url($profile->profile->profile_picture) : asset('storage/profile-photos/default.png') }}"
+                                <img src="{{ $profile->profile?->profile_picture_url }}"
                                     alt="{{ $profile->name }}"
                                     class="w-32 h-32 mx-auto rounded-full mb-4 border-4 border-gray-300 object-cover">
                                 <h3 class="font-semibold text-lg text-center">{{ $profile->name }}</h3>

@@ -65,6 +65,13 @@ class ProfileController extends Controller
         return view('profile.edit', compact('user', 'showEula'));
     }
 
+    private function getS3Url($path)
+    {
+        if (!$path) return null;
+        return Storage::disk('s3')->url($path);
+    }
+
+    // Update the update method to store the full path
     public function update(Request $request)
     {
         $request->validate([
@@ -83,7 +90,8 @@ class ProfileController extends Controller
             if ($profile->profile_picture) {
                 Storage::disk('s3')->delete($profile->profile_picture);
             }
-            $profile->profile_picture = $request->file('profile_picture')->store('profile-pictures', 's3');
+            $path = $request->file('profile_picture')->store('profile-pictures', 's3');
+            $profile->profile_picture = $path; // Store the path only
         }
 
         // Handle cover picture upload to S3
@@ -91,7 +99,8 @@ class ProfileController extends Controller
             if ($profile->cover_picture) {
                 Storage::disk('s3')->delete($profile->cover_picture);
             }
-            $profile->cover_picture = $request->file('cover_picture')->store('cover-pictures', 's3');
+            $path = $request->file('cover_picture')->store('cover-pictures', 's3');
+            $profile->cover_picture = $path; // Store the path only
         }
 
         $profile->fill($request->only(['address', 'contact_number', 'bio']));
