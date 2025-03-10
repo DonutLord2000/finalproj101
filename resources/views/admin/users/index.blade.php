@@ -19,7 +19,7 @@
                         type="text" 
                         id="searchInput" 
                         name="search" 
-                        placeholder="Search by name, email, or student ID..." 
+                        placeholder="Search by name or email..." 
                         class="border border-gray-300 rounded-full px-3 py-2 w-full"
                         value="{{ request('search') }}"
                     >

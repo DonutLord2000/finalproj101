@@ -7,6 +7,8 @@
                 <span class="inline-block px-2 py-1 bg-blue-500 text-black-800 rounded">{{ $user->role }}</span>
             @elseif($user->role == 'alumni')
                 <span class="inline-block px-2 py-1 bg-green-500 text-black-800 rounded">{{ $user->role }}</span>
+            @elseif($user->role == 'student')
+                <span class="inline-block px-2 py-1 bg-yellow-500 text-black-800 rounded">{{ $user->role }}</span>
             @elseif($user->role == 'admin')
                 <span class="text-white inline-block px-2 py-1 bg-red-500 text-red-800 rounded">{{ $user->role }}</span>                                         
             @endif

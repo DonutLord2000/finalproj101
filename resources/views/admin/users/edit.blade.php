@@ -22,6 +22,7 @@
             <div class="mb-4">
                 <x-label for="role" value="{{ __('Role') }}" />
                 <select name="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm">
+                    <option value="guest" {{ $user->role === 'guest' ? 'selected' : '' }}>Guest</option>
                     <option value="student" {{ $user->role === 'student' ? 'selected' : '' }}>Student</option>
                     <option value="alumni" {{ $user->role === 'alumni' ? 'selected' : '' }}>Alumni</option>
                     <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>

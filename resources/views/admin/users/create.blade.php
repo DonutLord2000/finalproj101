@@ -88,6 +88,7 @@
                     <x-label for="role" value="{{ __('Register as:') }}" />
                     <select name="role" x-model="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm">
                         <option value="guest">Guest</option>
+                        <option value="student">Student</option>
                         <option value="alumni">Alumni</option>
                         <option value="admin">Admin</option>
                     </select>
