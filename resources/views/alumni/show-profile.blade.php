@@ -17,11 +17,15 @@
                     <!-- Profile Picture -->
                     <div class="absolute -bottom-16 left-6">
                         <div class="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden">
-                            @if($user->profile?->profile_picture)
-                                <img src="{{ Storage::disk('s3')->url($user->profile->profile_picture) }}"
-                                    alt="{{ $user->name }}"
-                                    class="w-full h-full object-cover">
-                            @endif
+                                    @if($user->profile?->profile_picture)
+                                        <img src="{{ Storage::disk('s3')->temporaryUrl($user->profile->profile_picture, now()->addMinutes(5)) }}"
+                                            alt="{{ $user->name }}"
+                                            class="w-full h-full object-cover">
+                                    @else
+                                        <img src="{{ asset('storage/profile-photos/default.png') }}"
+                                            alt="{{ $user->name }}"
+                                            class="w-full h-full object-cover">
+                                    @endif
                         </div>
                     </div>
                 </div>
