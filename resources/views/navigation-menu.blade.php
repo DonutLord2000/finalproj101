@@ -26,15 +26,18 @@
                 <!-- Admin Navigation Links - Only show if authenticated and admin -->
                 @auth
                     @if (auth()->user()->role == 'admin')
-                        <div class="relative hidden sm:flex sm:items-center sm:ms-10 group">
-                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <div class="relative hidden sm:flex sm:items-center sm:ms-10" x-data="{ open: false }">
+                            <button @click="open = !open" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 {{ __('Admin Panel') }}
                                 <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
                             
-                            <div class="absolute left-0 hidden mt-40 w-48 bg-white border border-gray-200 rounded-md shadow-lg group-hover:block">
+                            <div x-show="open" 
+                                 @click.away="open = false"
+                                 class="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                                 style="display: none;">
                                 <x-dropdown-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.index')">
                                     {{ __('User Management') }}
                                 </x-dropdown-link>
@@ -284,4 +287,3 @@
         @endauth
     </div>
 </nav>
-
