@@ -57,14 +57,6 @@
                                                 @endif
                                             </a>
                                         </th>
-                                        <th scope="col" width="150" class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            <a href="{{ route('admin.users.index', ['sort' => 'student_id', 'direction' => $sortColumn === 'student_id' && $sortDirection === 'asc' ? 'desc' : 'asc', 'search' => request('search')]) }}">
-                                                Student ID
-                                                @if($sortColumn === 'student_id') 
-                                                    <span>{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span> 
-                                                @endif
-                                            </a>
-                                        </th>
                                         <th scope="col" width="200" class="px-6 py-3 bg-gray-50">
                                         </th>
                                     </tr>

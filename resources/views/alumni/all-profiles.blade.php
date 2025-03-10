@@ -15,10 +15,10 @@
 
                 <div class="bg-gray-200 p-8">
                     <div class="flex flex-wrap items-center gap-4 mb-8">
-                        <label class="flex items-center">
+                        <label class="flex items-center" x-data="{ showVerified: true }" x-init="fetchProfiles">
                             <div class="relative inline-block w-16 mr-2 align-middle select-none transition duration-200 ease-in">
-                                <input type="checkbox" x-model="showVerified" @change="fetchProfiles" 
-                                       class="toggle-checkbox absolute block w-8 h-8 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                                <input type="checkbox" x-model="showVerified" @change="fetchProfiles" checked
+                                    class="toggle-checkbox absolute block w-8 h-8 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
                                 <label for="toggle" class="toggle-label block overflow-hidden h-8 rounded-full bg-gray-300 cursor-pointer"></label>
                             </div>
                             <span class="text-gray-700">Show only verified</span>

@@ -21,7 +21,7 @@ class UserController extends Controller
         $sortColumn = $request->get('sort', 'name'); 
         $sortDirection = $request->get('direction', 'asc'); 
 
-        $validSortColumns = ['name', 'email', 'role', 'student_id'];
+        $validSortColumns = ['name', 'email', 'role'];
         $validSortDirections = ['asc', 'desc'];
 
         if (!in_array($sortColumn, $validSortColumns) || !in_array($sortDirection, $validSortDirections)) {
@@ -35,7 +35,6 @@ class UserController extends Controller
             return $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', '%' . $search . '%')
                     ->orWhere('email', 'like', '%' . $search . '%')
-                    ->orWhere('student_id', 'like', '%' . $search . '%');
             });
         })
         ->orderBy($sortColumn, $sortDirection)
@@ -60,7 +59,6 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|string',
-            'student_id' => 'required|string',
         ]);
 
         $user = User::create([
@@ -68,7 +66,6 @@ class UserController extends Controller
             'email' => $validatedData['email'],
             'password' => bcrypt($validatedData['password']),
             'role' => $validatedData['role'],
-            'student_id' => $validatedData['student_id'],
         ]);
 
         $this->activityLogService->log('user', 'Created new user: ' . $user->name);
@@ -87,7 +84,6 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|string',
-            'student_id' => 'required|string',
         ]);
 
         $user->update($validatedData);

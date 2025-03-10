@@ -28,11 +28,6 @@
                 </select>
             </div>
 
-            <div class="mb-4">
-                <x-label for="student_id" value="{{ __('Student ID') }}" />
-                <x-input type="text" name="student_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm" value="{{ $user->student_id }}" required />
-            </div>
-
             <button type="submit" class="mt-6 w-full btn-custom">
                 Update
             </button>

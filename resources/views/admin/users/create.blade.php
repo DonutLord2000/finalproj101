@@ -87,15 +87,10 @@
                 <div class="mt-4">
                     <x-label for="role" value="{{ __('Register as:') }}" />
                     <select name="role" x-model="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm">
-                        <option value="student">Student</option>
+                        <option value="guest">Guest</option>
                         <option value="alumni">Alumni</option>
                         <option value="admin">Admin</option>
                     </select>
-                </div>
-
-                <div class="mt-4">
-                    <x-label for="student_id" value="{{ __('Licence Number') }}" />
-                    <x-input id="student_id" class="block mt-1 w-full" type="text" :value="old('student_id')" name="student_id" required />
                 </div>
 
                 <button type="submit" class="mt-6 w-full btn-custom">
