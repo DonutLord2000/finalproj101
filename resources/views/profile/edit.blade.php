@@ -36,9 +36,15 @@
                         <div class="absolute -bottom-16 left-6">
                             <div class="relative">
                                 <div class="w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden">
-                                    <img src="{{ Storage::disk('s3')->url($user->profile->profile_picture) }}"
-                                        alt="{{ $user->name }}"
-                                        class="w-full h-full object-cover">
+                                    @if($user->profile?->profile_picture)
+                                        <img src="{{ Storage::disk('s3')->url($user->profile->profile_picture) }}"
+                                            alt="{{ $user->name }}"
+                                            class="w-full h-full object-cover">
+                                    @else
+                                        <img src="{{ asset('storage/profile-photos/default.png') }}"
+                                            alt="{{ $user->name }}"
+                                            class="w-full h-full object-cover">
+                                    @endif
                                 </div>
                                 <label for="profile_upload" class="absolute bottom-0 right-0 cursor-pointer">
                                     <span class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50">

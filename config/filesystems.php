@@ -56,6 +56,7 @@ return [
             'url' => 'AWS_URL',
             'endpoint' => 'https://367be3a2035528943240074d0096e0cd.r2.cloudflarestorage.com',
             'use_path_style_endpoint' => filter_var(env('AWS_USE_PATH_STYLE_ENDPOINT', false), FILTER_VALIDATE_BOOLEAN),
+            'throw' => false,
         ],
 
     ],
