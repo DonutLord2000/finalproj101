@@ -13,6 +13,10 @@ class ScholarshipForm extends Model
         'name',
         'file_path',
         'is_active',
+        'storage_disk'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean'
     ];
 }
-

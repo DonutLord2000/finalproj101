@@ -15,6 +15,7 @@ class ScholarshipDocument extends Model
         'document_path',
         'original_name',
         'mime_type',
+        'disk'
     ];
 
     /**

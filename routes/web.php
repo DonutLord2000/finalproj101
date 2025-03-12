@@ -140,29 +140,25 @@ Route::group(['middleware' => 'admin'], function () {
 });
 
 
-// Public scholarship routes
-Route::get('/scholarships', [ScholarshipController::class, 'index'])->name('scholarships.index');
-Route::get('/scholarships/download/{form}', [ScholarshipController::class, 'downloadForm'])->name('scholarships.download-form');
-Route::get('/scholarships/apply', [ScholarshipController::class, 'showApplicationForm'])->name('scholarships.apply');
-Route::post('/scholarships/apply', [ScholarshipController::class, 'storeApplication'])->name('scholarships.store-application');
-
-// Document viewing route (with auth check in controller)
-Route::get('/scholarships/documents/{document}', [ScholarshipController::class, 'viewDocument'])->name('scholarships.view-document');
-
-// Admin routes
-Route::middleware(['auth:sanctum', 'verified'])->prefix('admin')->name('admin.')->group(function () {
-    // Scholarship Applications
+// Admin Scholarship Routes
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    // Form management routes - place these BEFORE the specific application routes
+    Route::get('/scholarships/forms', [ScholarshipController::class, 'formManagement'])->name('scholarships.forms');
+    Route::post('/scholarships/forms', [ScholarshipController::class, 'uploadForm'])->name('scholarships.upload-form');
+    Route::delete('/scholarships/forms/{form}', [ScholarshipController::class, 'deleteForm'])->name('scholarships.delete-form');
+    Route::put('/scholarships/forms/{form}/toggle-status', [ScholarshipController::class, 'toggleFormStatus'])->name('scholarships.toggle-form-status');
+    
+    // Existing scholarship routes
     Route::get('/scholarships', [ScholarshipController::class, 'adminIndex'])->name('scholarships.index');
     Route::get('/scholarships/{application}', [ScholarshipController::class, 'adminShow'])->name('scholarships.show');
     Route::put('/scholarships/{application}/review', [ScholarshipController::class, 'markUnderReview'])->name('scholarships.review');
     Route::put('/scholarships/{application}/approve', [ScholarshipController::class, 'approve'])->name('scholarships.approve');
     Route::put('/scholarships/{application}/reject', [ScholarshipController::class, 'reject'])->name('scholarships.reject');
-    
-    // Scholarship Tabs Management
-    Route::resource('scholarship-tabs', ScholarshipTabController::class);
-    
-    // Scholarship Forms Management
-    Route::resource('scholarship-forms', ScholarshipFormController::class)->except(['edit', 'update', 'show']);
-    Route::put('/scholarship-forms/{scholarshipForm}/set-active', [ScholarshipFormController::class, 'setActive'])->name('scholarship-forms.set-active');
 });
 
+// User-facing scholarship routes
+Route::get('/scholarships', [ScholarshipController::class, 'index'])->name('scholarships.index');
+Route::get('/scholarships/apply', [ScholarshipController::class, 'showApplicationForm'])->name('scholarships.apply');
+Route::post('/scholarships/apply', [ScholarshipController::class, 'storeApplication'])->name('scholarships.store-application');
+Route::get('/scholarships/download/{formId?}', [ScholarshipController::class, 'downloadForm'])->name('scholarships.download-form');
+Route::get('/scholarships/document/{document}', [ScholarshipController::class, 'viewDocument'])->name('scholarships.view-document');
