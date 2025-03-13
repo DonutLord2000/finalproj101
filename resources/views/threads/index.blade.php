@@ -8,6 +8,122 @@
 
     <div class="py-12 mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-6 mb-6 mx-auto w-full lg:w-[60rem]">
+            <!-- Search and Filter Section -->
+            <div class="mb-6">
+                <form action="{{ route('threads.index') }}" method="GET" class="mb-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="flex-1">
+                            <input type="text" name="search" placeholder="Search posts or usernames..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" value="{{ request('search') }}">
+                        </div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Search
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mb-4 flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-medium text-gray-700">Filters:</span>
+                    
+                    <!-- Role filter dropdown -->
+                    <div class="relative inline-block text-left" x-data="{ open: false }">
+                        <button @click="open = !open" type="button" class="inline-flex justify-between w-32 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500">
+                            <span>
+                                @if(request('role') == 'admin')
+                                    Admin
+                                @elseif(request('role') == 'student')
+                                    Student
+                                @elseif(request('role') == 'alumni')
+                                    Alumni
+                                @elseif(request('role') == 'guest')
+                                    Guest
+                                @else
+                                    All Roles
+                                @endif
+                            </span>
+                            <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="py-1" role="menu" aria-orientation="vertical">
+                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'all'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ !request('role') || request('role') == 'all' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">All Roles</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'admin'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'admin' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Admin</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'student'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'student' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Student</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'alumni'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'alumni' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Alumni</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'guest'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'guest' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Guest</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sort filter dropdown -->
+                    <div class="relative inline-block text-left" x-data="{ open: false }">
+                        <button @click="open = !open" type="button" class="inline-flex justify-between w-32 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500">
+                            <span>
+                                @if(request('sort') == 'most_liked')
+                                    Most Liked
+                                @elseif(request('sort') == 'most_heart')
+                                    Most Heart
+                                @elseif(request('sort') == 'most_comment')
+                                    Most Comments
+                                @else
+                                    Latest
+                                @endif
+                            </span>
+                            <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="py-1" role="menu" aria-orientation="vertical">
+                                <a href="{{ route('threads.index', array_merge(request()->except('sort'), ['sort' => 'latest'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ !request('sort') || request('sort') == 'latest' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Latest</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('sort'), ['sort' => 'most_liked'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('sort') == 'most_liked' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Most Liked</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('sort'), ['sort' => 'most_heart'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('sort') == 'most_heart' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Most Heart</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('sort'), ['sort' => 'most_comment'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('sort') == 'most_comment' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Most Comments</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Time filter dropdown -->
+                    <div class="relative inline-block text-left" x-data="{ open: false }">
+                        <button @click="open = !open" type="button" class="inline-flex justify-between w-32 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500">
+                            <span>
+                                @if(request('time') == 'today')
+                                    Today
+                                @elseif(request('time') == 'week')
+                                    This Week
+                                @elseif(request('time') == 'month')
+                                    This Month
+                                @else
+                                    All Time
+                                @endif
+                            </span>
+                            <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="py-1" role="menu" aria-orientation="vertical">
+                                <a href="{{ route('threads.index', array_merge(request()->except('time'), ['time' => 'all'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ !request('time') || request('time') == 'all' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">All Time</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('time'), ['time' => 'today'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('time') == 'today' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Today</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('time'), ['time' => 'week'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('time') == 'week' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">This Week</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('time'), ['time' => 'month'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('time') == 'month' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">This Month</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Clear filters button -->
+                    @if(request('role') || request('sort') || request('time'))
+                        <a href="{{ route('threads.index') }}" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Clear Filters
+                        </a>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Create Post Form -->
             <h3 class="text-lg font-semibold mb-4">Create a new post</h3>
             <form action="{{ route('threads.store') }}" method="POST">
                 @csrf
@@ -30,7 +146,9 @@
                                 <img src="{{ $thread->user->profile_photo_url }}" alt="{{ $thread->user->name }}" class="w-10 h-10 rounded-full">
                                 <div>
                                     <h4 class="text-lg font-semibold text-gray-900">
-                                        {{ $thread->user->name }}
+                                        <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
+                                            {{ $thread->user->name }}
+                                        </a>
                                         @php
                                         $bgColor = match($thread->user->role) {
                                             'alumni' => 'inline-block px-2 py-1 bg-green-500 text-green-800 rounded',
@@ -117,9 +235,14 @@
                                 <img src="{{ $comment->user->profile_photo_url }}" alt="{{ $comment->user->name }}" class="w-8 h-8 rounded-full">
                                 <div>
                                     <p class="font-semibold text-gray-900">
-                                        {{ $comment->user->name }}
+                                        <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
+                                            {{ $comment->user->name }}
+                                        </a>
                                         @php
                                             $bgColor = match($comment->user->role) {
+                                                'alumni' => 'bg-green-200 text-green-800',
+                                                'admin' => 'bg-red-200 text-red-800',
+                                                'student' => 'bg-blue-200 text-blue-800',
                                                 default => 'bg-gray-200 text-gray-700',
                                             };
                                         @endphp
@@ -150,10 +273,6 @@
             {{ $threads->links() }}
         </div>
     </div>
-
-    <style>
-        
-    </style>
     
     @push('scripts')
 <script>
@@ -230,4 +349,3 @@
 </script>
 @endpush
 </x-app-layout>
-

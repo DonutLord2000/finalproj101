@@ -6,16 +6,70 @@ use App\Models\Thread;
 use App\Models\Comment;
 use App\Models\Reaction; 
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ThreadController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $threads = Thread::withCount(['comments', 'upvotes', 'hearts'])
-            ->with('user')
-            ->latest()
-            ->paginate(15);
-
+        $query = Thread::withCount(['comments', 'upvotes', 'hearts'])
+            ->with('user');
+        
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('content', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Role filter
+        if ($request->has('role') && $request->role !== 'all') {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('role', $request->role);
+            });
+        }
+        
+        // Time filter
+        if ($request->has('time')) {
+            switch ($request->time) {
+                case 'today':
+                    $query->whereDate('created_at', Carbon::today());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                    break;
+                case 'month':
+                    $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+                    break;
+            }
+        }
+        
+        // Sort filter
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'most_liked':
+                    $query->orderByDesc('upvotes_count');
+                    break;
+                case 'most_heart':
+                    $query->orderByDesc('hearts_count');
+                    break;
+                case 'most_comment':
+                    $query->orderByDesc('comments_count');
+                    break;
+                default:
+                    $query->latest();
+                    break;
+            }
+        } else {
+            $query->latest();
+        }
+        
+        $threads = $query->paginate(15)->withQueryString();
+        
         return view('threads.index', compact('threads'));
     }
 
@@ -43,43 +97,42 @@ class ThreadController extends Controller
     }
 
     public function react(Request $request, Thread $thread)
-{
-    $type = $request->input('type');
-    $user = auth()->user();
+    {
+        $type = $request->input('type');
+        $user = auth()->user();
 
-    // Find the existing reaction by the user for the given type
-    $reaction = $thread->reactions()->where('user_id', $user->id)->where('type', $type)->first();
+        // Find the existing reaction by the user for the given type
+        $reaction = $thread->reactions()->where('user_id', $user->id)->where('type', $type)->first();
 
-    // Toggle reaction
-    if ($reaction) {
-        $reaction->delete();
-        $message = 'Reaction removed';
-        $userReacted = false; // User no longer has this reaction
-    } else {
-        $thread->reactions()->create([
-            'user_id' => $user->id,
-            'type' => $type,
+        // Toggle reaction
+        if ($reaction) {
+            $reaction->delete();
+            $message = 'Reaction removed';
+            $userReacted = false; // User no longer has this reaction
+        } else {
+            $thread->reactions()->create([
+                'user_id' => $user->id,
+                'type' => $type,
+            ]);
+            $message = 'Reaction added';
+            $userReacted = true; // User now has this reaction
+        }
+
+        // Recalculate the counts for each reaction type
+        $counts = [
+            'upvotes' => $thread->reactions()->where('type', 'upvote')->count(),
+            'hearts' => $thread->reactions()->where('type', 'heart')->count(),
+        ];
+
+        return response()->json([
+            'message' => $message,
+            'counts' => $counts,
+            'userReacted' => [
+                'upvote' => $thread->reactions()->where('user_id', $user->id)->where('type', 'upvote')->exists(),
+                'heart' => $thread->reactions()->where('user_id', $user->id)->where('type', 'heart')->exists(),
+            ]
         ]);
-        $message = 'Reaction added';
-        $userReacted = true; // User now has this reaction
     }
-
-    // Recalculate the counts for each reaction type
-    $counts = [
-        'upvotes' => $thread->reactions()->where('type', 'upvote')->count(),
-        'hearts' => $thread->reactions()->where('type', 'heart')->count(),
-    ];
-
-    return response()->json([
-        'message' => $message,
-        'counts' => $counts,
-        'userReacted' => [
-            'upvote' => $thread->reactions()->where('user_id', $user->id)->where('type', 'upvote')->exists(),
-            'heart' => $thread->reactions()->where('user_id', $user->id)->where('type', 'heart')->exists(),
-        ]
-    ]);
-}
-
 
     public function storeComment(Request $request, Thread $thread)
     {
@@ -96,13 +149,13 @@ class ThreadController extends Controller
     }
 
     public function getReactionStatus(Thread $thread)
-{
-    $user = auth()->user();
-    return response()->json([
-        'upvote' => $thread->reactions()->where('user_id', $user->id)->where('type', 'upvote')->exists(),
-        'heart' => $thread->reactions()->where('user_id', $user->id)->where('type', 'heart')->exists(),
-    ]);
-}
+    {
+        $user = auth()->user();
+        return response()->json([
+            'upvote' => $thread->reactions()->where('user_id', $user->id)->where('type', 'upvote')->exists(),
+            'heart' => $thread->reactions()->where('user_id', $user->id)->where('type', 'heart')->exists(),
+        ]);
+    }
 
     public function edit(Thread $thread)
     {

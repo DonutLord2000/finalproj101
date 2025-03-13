@@ -9,7 +9,9 @@
                             <img src="{{ $thread->user->profile_photo_url }}" alt="{{ $thread->user->name }}" class="w-12 h-12 rounded-full">
                             <div>
                                 <h3 class="text-xl font-semibold text-gray-900">
-                                    {{ $thread->user->name }}
+                                    <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
+                                        {{ $thread->user->name }}
+                                    </a>
                                     @php
                                     $bgColor = match($thread->user->role) {
                                         'alumni' => 'inline-block px-2 py-1 bg-green-500 text-green-800 rounded',
@@ -86,7 +88,9 @@
                                 <img src="{{ $comment->user->profile_photo_url }}" alt="{{ $comment->user->name }}" class="w-10 h-10 rounded-full">
                                 <div class="flex-grow">
                                     <p class="font-semibold text-gray-900">
-                                        {{ $comment->user->name }}
+                                        <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
+                                            {{ $comment->user->name }}
+                                        </a>
                                         @php
                                             $bgColor = match($comment->user->role) {
                                                 'alumni' => 'inline-block px-2 py-1 bg-green-500 text-green-800 rounded',
@@ -218,4 +222,3 @@
 </script>
 @endpush
 </x-app-layout>
-
