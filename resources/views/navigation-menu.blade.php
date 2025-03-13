@@ -10,7 +10,7 @@
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
+               <!-- Public Navigation Links - Available to all users including guests -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
@@ -23,48 +23,6 @@
                     </x-nav-link>
                 </div>
 
-                <!-- Admin Navigation Links - Only show if authenticated and admin -->
-                @auth
-                    @if (auth()->user()->role == 'admin')
-                        <div class="relative hidden sm:flex sm:items-center sm:ms-10" x-data="{ open: false }">
-                            <button @click="open = !open" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {{ __('Admin Panel') }}
-                                <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                            
-                            <div x-show="open" 
-                                 @click.away="open = false"
-                                 class="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
-                                 style="display: none;">
-                                <x-dropdown-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.index')">
-                                    {{ __('User Management') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('news.index') }}" :active="request()->routeIs('news.index')">
-                                    {{ __('News Management') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('admin.pending-responses') }}" :active="request()->routeIs('admin.pending-responses')">
-                                    {{ __('Tracer Responses') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('alumni.index') }}" :active="request()->routeIs('alumni.index')">
-                                    {{ __('Alumni Index') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('verification.index') }}" :active="request()->routeIs('verification.index')">
-                                    {{ __('Verification Request Management') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('admin.scholarships.index') }}" :active="request()->routeIs('admin.scholarships.index')">
-                                    {{ __('Scholarship Request') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link href="{{ route('activity-logs.index') }}" :active="request()->routeIs('activity-logs.index')">
-                                    {{ __('Activity Logs') }}
-                                </x-dropdown-link>
-                            </div>
-                        </div>
-                    @endif
-                @endauth
-
-                <!-- Public Navigation Links - Available to all users including guests -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link href="{{ route('threads.index') }}" :active="request()->routeIs('threads.index')">
                         {{ __('Discussion') }}
@@ -77,21 +35,59 @@
                     </x-nav-link>
                 </div>
 
-                <!-- Authenticated-only Navigation Links -->
-                @auth
-                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link href="{{ route('tracer-study.form') }}" :active="request()->routeIs('tracer-study.form')">
-                            {{ __('Tracer Study') }}
-                        </x-nav-link>
-                    </div>
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link href="{{ route('tracer-study.form') }}" :active="request()->routeIs('tracer-study.form')">
+                        {{ __('Tracer Study') }}
+                    </x-nav-link>
+                </div>
 
-                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link href="{{ route('profile.edit') }}" :active="request()->routeIs('profile.edit')">
-                            {{ __('My Profile') }}
-                        </x-nav-link>
-                    </div>
-                @endauth
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link href="{{ route('profile.edit') }}" :active="request()->routeIs('profile.edit')">
+                        {{ __('My Profile') }}
+                    </x-nav-link>
+                </div>
             </div>
+
+            <!-- Admin Navigation Links - Only show if authenticated and admin -->
+            @auth
+                @if (auth()->user()->role == 'admin')
+                    <div class="relative hidden sm:flex sm:items-center sm:ms-10" x-data="{ open: false }">
+                        <button @click="open = !open" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white-700 bg-red-400 hover:bg-red-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {{ __('Admin Panel') }}
+                            <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        
+                        <div x-show="open" 
+                                @click.away="open = false"
+                                class="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                                style="display: none;">
+                            <x-dropdown-link href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.index')">
+                                {{ __('User Management') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link href="{{ route('news.index') }}" :active="request()->routeIs('news.index')">
+                                {{ __('News Management') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link href="{{ route('admin.pending-responses') }}" :active="request()->routeIs('admin.pending-responses')">
+                                {{ __('Tracer Responses') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link href="{{ route('alumni.index') }}" :active="request()->routeIs('alumni.index')">
+                                {{ __('Alumni Index') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link href="{{ route('verification.index') }}" :active="request()->routeIs('verification.index')">
+                                {{ __('Verification Request Management') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link href="{{ route('admin.scholarships.index') }}" :active="request()->routeIs('admin.scholarships.index')">
+                                {{ __('Scholarship Request') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link href="{{ route('activity-logs.index') }}" :active="request()->routeIs('activity-logs.index')">
+                                {{ __('Activity Logs') }}
+                            </x-dropdown-link>
+                        </div>
+                    </div>
+                @endif
+            @endauth
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <!-- Settings Dropdown - Only for authenticated users -->
@@ -123,7 +119,7 @@
                                 </div>
 
                                 <x-dropdown-link href="{{ route('profile.show') }}">
-                                    {{ __('Profile') }}
+                                    {{ __('Email & Password') }}
                                 </x-dropdown-link>
 
                                 <x-dropdown-link href="{{ route('about-us') }}">
@@ -192,19 +188,23 @@
             </x-responsive-nav-link>
 
             <x-responsive-nav-link href="{{ route('alumni.all-profiles.index') }}" :active="request()->routeIs('alumni.all-profiles.index')">
-                {{ __('All Profiles') }}
+                {{ __('Alumni Profiles') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="{{ route('tracer-study.form') }}" :active="request()->routeIs('tracer-study.form')">
+                {{ __('Tracer Study') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="{{ route('profile.edit') }}" :active="request()->routeIs('profile.edit')">
+                {{ __('My Profile') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link href="{{ route('scholarships.index') }}" :active="request()->routeIs('scholarships.index')">
+                {{ __('Scholarship') }}
             </x-responsive-nav-link>
 
             <!-- Authenticated-only Navigation Links -->
             @auth
-                <x-responsive-nav-link href="{{ route('tracer-study.form') }}" :active="request()->routeIs('tracer-study.form')">
-                    {{ __('Tracer Study') }}
-                </x-responsive-nav-link>
-
-                <x-responsive-nav-link href="{{ route('profile.edit') }}" :active="request()->routeIs('profile.edit')">
-                    {{ __('Alumni Profile') }}
-                </x-responsive-nav-link>
-
                 <!-- Admin Links -->
                 @if (auth()->user()->role == 'admin')
                     <div class="border-t border-gray-200 pt-2">
@@ -223,14 +223,16 @@
                         <x-responsive-nav-link href="{{ route('alumni.index') }}" :active="request()->routeIs('alumni.index')">
                             {{ __('Alumni Index') }}
                         </x-responsive-nav-link>
+                        <x-responsive-nav-link href="{{ route('verification.index') }}" :active="request()->routeIs('verification.index')">
+                            {{ __('Verification Request Management') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link href="{{ route('admin.scholarships.index') }}" :active="request()->routeIs('admin.scholarships.index')">
+                        {{ __('Scholarship Request') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link href="{{ route('activity-logs.index') }}" :active="request()->routeIs('activity-logs.index')">
+                        {{ __('Activity Logs') }}
+                        </x-responsive-nav-link>
                     </div>
-                @endif
-
-                <!-- Student Links -->
-                @if (auth()->user()->role == 'student')
-                    <x-responsive-nav-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
-                        {{ __('Lessons') }}
-                    </x-responsive-nav-link>
                 @endif
             @endauth
         </div>
@@ -254,7 +256,7 @@
                 <div class="mt-3 space-y-1">
                     <!-- Account Management -->
                     <x-responsive-nav-link href="{{ route('profile.show') }}" :active="request()->routeIs('profile.show')">
-                        {{ __('Profile') }}
+                        {{ __('Email & Password') }}
                     </x-responsive-nav-link>
 
                     @if (Laravel\Jetstream\Jetstream::hasApiFeatures())

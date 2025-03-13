@@ -72,7 +72,7 @@ Route::middleware(['verified'])->group(function () {
     Route::resource('threads', ThreadController::class);
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chatbot', [ChatbotController::class, 'chat']);
 });
 
@@ -109,7 +109,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 // Alumni new profile creation
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/experience', [ProfileController::class, 'addExperience'])->name('experience.add');

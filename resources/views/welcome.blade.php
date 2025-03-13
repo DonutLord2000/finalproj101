@@ -68,16 +68,27 @@
             }
             .mobile-menu-items {
                 display: none;
-                position: absolute;
-                top: 100%;
+                position: fixed;
+                top: 64px; /* Height of the navbar */
                 left: 0;
                 right: 0;
                 background: linear-gradient(90deg, #AB0A0A 0%, #8B0000 100%);
                 padding: 1rem;
-                z-index: 50;
+                z-index: 1000;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                max-height: calc(100vh - 64px);
+                overflow-y: auto;
             }
             .mobile-menu-items.active {
                 display: block;
+            }
+            .mobile-menu-items a {
+                display: block;
+                padding: 0.75rem 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .mobile-menu-items a:last-child {
+                border-bottom: none;
             }
         }
     </style>
@@ -92,16 +103,25 @@
                 </div>
                 
                 <!-- Desktop Navigation Menu -->
-                <div class="hidden md:flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-4 desktop-menu">
                     <a href="dashboard" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Dashboard</a>
-                    <a href="tracer-study" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Alumni Tracer</a>
                     <a href="scholarships" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Scholarship</a>
+                    <a href="tracer-study" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Alumni Tracer</a>
+                    <a href="threads" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Discussion</a>
+                    <a href="alumni-profiles" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Alumni Profiles</a>
                     <a href="about-us" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">About Us</a>
                     <a href="contact-directory" class="text-white hover:text-gray-200 px-3 py-2 text-sm font-medium">Contact Us</a>
                 </div>
                 
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="text-white hover:text-gray-200 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
                 @if (Route::has('login'))
-                    <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-4">
                         @auth
                             <a href="{{ url('/dashboard') }}" class="text-white hover:text-black font-semibold">Dashboard</a>
                         @else
@@ -112,6 +132,32 @@
                         @endauth
                     </div>
                 @endif
+            </div>
+            
+            <!-- Mobile Menu Items -->
+            <div id="mobile-menu-items" class="mobile-menu-items md:hidden">
+                <a href="dashboard" class="text-white hover:text-gray-200 text-sm font-medium">Dashboard</a>
+                <a href="scholarships" class="text-white hover:text-gray-200 text-sm font-medium">Scholarship</a>
+                <a href="tracer-study" class="text-white hover:text-gray-200 text-sm font-medium">Alumni Tracer</a>
+                <a href="threads" class="text-white hover:text-gray-200 text-sm font-medium">Discussion</a>
+                <a href="alumni-profiles" class="text-white hover:text-gray-200 text-sm font-medium">Alumni Profiles</a>
+                <a href="about-us" class="text-white hover:text-gray-200 text-sm font-medium">About Us</a>
+                <a href="contact-directory" class="text-white hover:text-gray-200 text-sm font-medium">Contact Us</a>
+                
+                @if (Route::has('login'))
+                    <div class="pt-4 border-t border-white/10 mt-4">
+                        @auth
+                            <a href="{{ url('/dashboard') }}" class="text-white hover:text-gray-200 text-sm font-medium">Dashboard</a>
+                        @else
+                            <a href="{{ route('login') }}" class="block bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300 text-sm text-center mb-2">Login</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="block bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-300 text-sm text-center">Register</a>
+                            @endif
+                        @endauth
+                    </div>
+                @endif
+            </div>
+        </div>
     </nav>
 
     <!-- Hero Section -->
@@ -190,16 +236,25 @@
         setTimeout(typeEffect, typingSpeed);
     }
 
-    typeEffect();
-
     // Mobile menu toggle
     document.addEventListener('DOMContentLoaded', function() {
+        // Start typewriter effect
+        typeEffect();
+        
+        // Mobile menu toggle functionality
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenuItems = document.getElementById('mobile-menu-items');
         
         if (mobileMenuButton && mobileMenuItems) {
             mobileMenuButton.addEventListener('click', function() {
                 mobileMenuItems.classList.toggle('active');
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileMenuButton.contains(event.target) && !mobileMenuItems.contains(event.target)) {
+                    mobileMenuItems.classList.remove('active');
+                }
             });
         }
     });
@@ -274,17 +329,17 @@
                 <div>
                     <h4 class="text-lg font-semibold mb-4">QUICK LINKS</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="text-blue-600 hover:text-blue-800">About Us</a></li>
-                        <li><a href="#" class="text-blue-600 hover:text-blue-800">Contact Us</a></li>
-                        <li><a href="#" class="text-blue-600 hover:text-blue-800">Privacy Policy</a></li>
-                        <li><a href="#" class="text-blue-600 hover:text-blue-800">Alumni Tracer</a></li>
+                        <li><a href="about-us" class="text-blue-600 hover:text-blue-800">About Us</a></li>
+                        <li><a href="contact-directory" class="text-blue-600 hover:text-blue-800">Contact Us</a></li>
+                        <li><a href="tracer-study" class="text-blue-600 hover:text-blue-800">Alumni Tracer</a></li>
+                        <li><a href="scholarships" class="text-blue-600 hover:text-blue-800">Scholarship</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold mb-4">LOCATION MAP</h4>
                     <div class="aspect-w-16 aspect-h-9">
                         <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1930.9!2d121.0!3d14.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDQyJzAwLjAiTiAxMjHCsDAwJzAwLjAiRQ!5e0!3m2!1sen!2sph!4v1234567890!5m2!1sen!2sph"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.107538254645!2d120.98392120000001!3d14.649836499999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b5d4fab883bb%3A0x96f1adb22bed4d5e!2sGlobal%20Reciprocal%20Colleges%20-%20GRC!5e0!3m2!1sen!2sph!4v1741855202624!5m2!1sen!2sph"
                             width="100%" 
                             height="200" 
                             style="border:0;" 
