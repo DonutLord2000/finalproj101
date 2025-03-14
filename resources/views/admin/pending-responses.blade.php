@@ -91,6 +91,10 @@
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-black-500">{{ $response->response_data['year_graduated'] }}</td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-black-500">{{ $response->response_data['degree_program'] }}</td>
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-black-500">{{ ucfirst($response->status) }}</td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-2 view-details" data-id="{{ $response->id }}">View</button>
+                                            <button class="text-green-600 hover:text-green-900 mr-2 edit-response" data-id="{{ $response->id }}">Edit</button>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

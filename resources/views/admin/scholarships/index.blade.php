@@ -7,7 +7,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-8xl mx-auto sm:px-6 lg:px-8" style="width: 1200pt">
+        <div class="max-w-8xl mx-auto sm:px-6 lg:px-8" style="width: 1100pt">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex flex-col md:flex-row justify-between items-center mb-6">
@@ -17,7 +17,7 @@
                             <!-- Search Form -->
                             <form action="{{ route('admin.scholarships.index') }}" method="GET" class="flex">
                                 <input type="text" name="search" placeholder="Search by email or name" value="{{ request('search') }}"
-                                    class="rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    class="rounded-l-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" style="width: 500px">
                                 <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-r-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                                     Search
                                 </button>
@@ -49,7 +49,7 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px">
                                         <a href="{{ route('admin.scholarships.index', ['sort' => 'email', 'direction' => request('direction') == 'asc' && request('sort') == 'email' ? 'desc' : 'asc'] + request()->except(['sort', 'direction'])) }}" class="flex items-center">
                                             Applicant
                                             @if(request('sort') == 'email')
@@ -63,7 +63,7 @@
                                             @endif
                                         </a>
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" >
                                         <a href="{{ route('admin.scholarships.index', ['sort' => 'created_at', 'direction' => request('direction') == 'asc' && request('sort') == 'created_at' ? 'desc' : 'asc'] + request()->except(['sort', 'direction'])) }}" class="flex items-center">
                                             Submitted At
                                             @if(request('sort') == 'created_at')
@@ -77,7 +77,7 @@
                                             @endif
                                         </a>
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="width: 100px">
                                         <a href="{{ route('admin.scholarships.index', ['sort' => 'status', 'direction' => request('direction') == 'asc' && request('sort') == 'status' ? 'desc' : 'asc'] + request()->except(['sort', 'direction'])) }}" class="flex items-center">
                                             Status
                                             @if(request('sort') == 'status')
@@ -91,7 +91,7 @@
                                             @endif
                                         </a>
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" >
                                         Documents
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -130,7 +130,7 @@
                                                 {{ ucfirst(str_replace('_', ' ', $application->status)) }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" >
                                             @foreach($application->documents as $document)
                                                 <a href="{{ route('scholarships.view-document', $document->id) }}" target="_blank" class="text-blue-600 hover:text-blue-900 block">
                                                     {{ $document->original_name }}
@@ -178,7 +178,7 @@
                         </table>
                     </div>
                     
-                    <div class="mt-4">
+                    <div class="mt-4" >
                         {{ $applications->links() }}
                     </div>
                 </div>
