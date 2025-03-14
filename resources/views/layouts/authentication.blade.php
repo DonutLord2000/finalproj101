@@ -14,20 +14,22 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
 
         <!-- Styles -->
         @livewireStyles
+
     </head>
     <body class="font-sans antialiased">
         <x-banner />
+
         <div class="min-h-screen bg-gray-100">
-            @livewire('navigation-menu')
+
+            <!-- Page Heading -->
 
             <!-- Page Content -->
             <main>
-                
-                @yield('content')
-            
+            @yield('content')
             </main>
         </div>
 
@@ -35,6 +37,5 @@
         @stack('scripts')
 
         @livewireScripts
-        <x-floating-chatbot />
     </body>
 </html>

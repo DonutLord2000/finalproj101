@@ -1,4 +1,5 @@
-<x-auth-layout>
+@extends('layouts.authentication') 
+    @section('content')
     @section('title', 'GRC - Login')
     <div class="relative min-h-screen">
         <!-- Background image with blur -->
@@ -106,4 +107,4 @@
             }
         }
     </script>
-</x-auth-layout>
+@endsection

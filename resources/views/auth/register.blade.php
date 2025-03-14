@@ -1,4 +1,5 @@
-<x-auth-layout>
+@extends('layouts.authentication') 
+    @section('content')
     @section('title', 'GRC - Register')
     <!-- Wrapper for background image and blur effect -->
     <div class="relative min-h-screen">
@@ -16,13 +17,54 @@
 
        <x-validation-errors class="mb-4" />
 
-       <form method="POST" action="{{ route('register') }}">
+       <form method="POST" action="{{ route('register') }}" id="registration-form">
            @csrf
 
-           <div>
-               <x-label for="name" value="{{ __('Student Name') }}" />
-               <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+           <div class="flex space-x-4 relative">
+               <div class="w-1/2">
+                   <x-label for="first_name" value="{{ __('First Name') }}" />
+                   <x-input 
+                       id="first_name" 
+                       class="block mt-1 w-full" 
+                       type="text" 
+                       name="first_name" 
+                       :value="old('first_name')" 
+                       required 
+                       autofocus 
+                       autocomplete="given-name" 
+                       onclick="showNameNotification()"
+                       pattern="[A-Za-z\s\-]+"
+                       title="Only letters, spaces, and hyphens are allowed"
+                       oninput="validateNameInput(this)" 
+                   />
+                   <div class="text-red-500 text-xs mt-1 hidden" id="first-name-error">Only letters, spaces, and hyphens are allowed</div>
+               </div>
+               <div class="w-1/2">
+                   <x-label for="last_name" value="{{ __('Last Name') }}" />
+                   <x-input 
+                       id="last_name" 
+                       class="block mt-1 w-full" 
+                       type="text" 
+                       name="last_name" 
+                       :value="old('last_name')" 
+                       required 
+                       autocomplete="family-name" 
+                       onclick="showNameNotification()"
+                       pattern="[A-Za-z\s\-]+"
+                       title="Only letters, spaces, and hyphens are allowed"
+                       oninput="validateNameInput(this)" 
+                   />
+                   <div class="text-red-500 text-xs mt-1 hidden" id="last-name-error">Only letters, spaces, and hyphens are allowed</div>
+               </div>
+               
+               <!-- Notification toast positioned under the name fields -->
+               <div id="notification-toast" class="absolute -bottom-10 left-0 right-0 bg-red-800 text-white px-4 py-2 rounded shadow-lg transform transition-all duration-300 scale-0 opacity-0 text-center text-sm">
+                   Please use your real name for registration purposes.
+               </div>
            </div>
+
+           <!-- Hidden field to store the combined name -->
+           <input type="hidden" id="name" name="name" value="{{ old('name') }}">
 
            <div class="mt-4">
                <x-label for="email" value="{{ __('Email') }}" />
@@ -70,29 +112,232 @@
                        eyeIcon.classList.remove("text-gray-700");
                    }
                }
+
+               // Show notification toast for 2 seconds
+               let notificationTimeout;
+               function showNameNotification() {
+                   const toast = document.getElementById('notification-toast');
+                   
+                   // Clear any existing timeout
+                   clearTimeout(notificationTimeout);
+                   
+                   // Show the toast
+                   toast.classList.remove('scale-0', 'opacity-0');
+                   toast.classList.add('scale-100', 'opacity-100');
+                   
+                   // Hide after 2 seconds
+                   notificationTimeout = setTimeout(() => {
+                       toast.classList.remove('scale-100', 'opacity-100');
+                       toast.classList.add('scale-0', 'opacity-0');
+                   }, 2000);
+               }
+
+               // Capitalize the first letter of each word in a string
+               function capitalizeWords(str) {
+                   // Handle empty strings
+                   if (!str) return '';
+                   
+                   // Split by spaces and hyphens, capitalize each part, then rejoin
+                   return str.split(/[\s-]+/).map(word => {
+                       if (word.length === 0) return '';
+                       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                   }).join(' ').replace(/\s-\s/g, '-');
+               }
+
+               // Capitalize the first letter of each name part (including hyphenated names)
+               function capitalizeNameParts(name) {
+                   // Handle hyphenated names like "jean-paul"
+                   return name.split('-').map(part => {
+                       return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                   }).join('-');
+               }
+
+               // Validate name input to allow only letters, spaces, and hyphens
+               function validateNameInput(input) {
+                   const errorId = input.id === 'first_name' ? 'first-name-error' : 'last-name-error';
+                   const errorElement = document.getElementById(errorId);
+                   
+                   // Regular expression to match only letters, spaces, and hyphens
+                   const regex = /^[A-Za-z\s\-]*$/;
+                   
+                   if (!regex.test(input.value)) {
+                       // Remove invalid characters
+                       input.value = input.value.replace(/[^A-Za-z\s\-]/g, '');
+                       
+                       // Show error message
+                       errorElement.classList.remove('hidden');
+                       setTimeout(() => {
+                           errorElement.classList.add('hidden');
+                       }, 3000);
+                   } else {
+                       errorElement.classList.add('hidden');
+                   }
+                   
+                   // Update the combined name field
+                   updateFullName();
+               }
+
+               // Function to combine first and last name into the hidden name field
+               function updateFullName() {
+                   const firstNameInput = document.getElementById('first_name');
+                   const lastNameInput = document.getElementById('last_name');
+                   const nameInput = document.getElementById('name');
+                   
+                   // Get the values and trim whitespace
+                   let firstName = firstNameInput.value.trim();
+                   let lastName = lastNameInput.value.trim();
+                   
+                   // Capitalize the first letter of each name part
+                   firstName = capitalizeNameParts(firstName);
+                   lastName = capitalizeNameParts(lastName);
+                   
+                   // Combine the names
+                   nameInput.value = firstName + ' ' + lastName;
+               }
+
+               // Validate all fields before form submission
+               document.addEventListener('DOMContentLoaded', function() {
+                   const form = document.getElementById('registration-form');
+                   const submitButton = form.querySelector('button[type="submit"]');
+                   const eulaModal = document.getElementById('eulaModal');
+                   const eulaContent = document.getElementById('eulaContent');
+                   const acceptEulaBtn = document.getElementById('acceptEula');
+                   const rejectEulaBtn = document.getElementById('rejectEula');
+                   
+                   const firstNameInput = document.getElementById('first_name');
+                   const lastNameInput = document.getElementById('last_name');
+                   const emailInput = document.getElementById('email');
+                   const passwordInput = document.getElementById('password');
+                   const passwordConfirmInput = document.getElementById('password_confirmation');
+                   
+                   // Initialize form if there are old values
+                   updateFullName();
+                   
+                   // Add input event listeners to update the combined name
+                   firstNameInput.addEventListener('input', updateFullName);
+                   lastNameInput.addEventListener('input', updateFullName);
+
+                   // Validate form before submission
+                   submitButton.addEventListener('click', function(e) {
+                       e.preventDefault();
+                       
+                       // Ensure names are properly capitalized before submission
+                       firstNameInput.value = capitalizeNameParts(firstNameInput.value.trim());
+                       lastNameInput.value = capitalizeNameParts(lastNameInput.value.trim());
+                       updateFullName();
+                       
+                       // Check if all required fields are filled
+                       if (validateForm()) {
+                           eulaModal.classList.remove('hidden');
+                       } else {
+                           // Alert the user to fill all fields
+                           alert('Please fill in all required fields correctly before proceeding.');
+                       }
+                   });
+
+                   function validateForm() {
+                       // Check if all required fields are filled and valid
+                       if (!firstNameInput.value.trim() || !lastNameInput.value.trim() || 
+                           !emailInput.value.trim() || !passwordInput.value.trim() || 
+                           !passwordConfirmInput.value.trim()) {
+                           return false;
+                       }
+                       
+                       // Check if passwords match
+                       if (passwordInput.value !== passwordConfirmInput.value) {
+                           return false;
+                       }
+                       
+                       // Check if names contain only valid characters
+                       const nameRegex = /^[A-Za-z\s\-]+$/;
+                       if (!nameRegex.test(firstNameInput.value) || !nameRegex.test(lastNameInput.value)) {
+                           return false;
+                       }
+                       
+                       // Check if email is valid
+                       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                       if (!emailRegex.test(emailInput.value)) {
+                           return false;
+                       }
+                       
+                       return true;
+                   }
+
+                   eulaContent.addEventListener('scroll', function() {
+                       if (eulaContent.scrollTop + eulaContent.clientHeight >= eulaContent.scrollHeight - 10) {
+                           acceptEulaBtn.disabled = false;
+                           acceptEulaBtn.classList.remove('bg-gray-300', 'text-gray-600');
+                           acceptEulaBtn.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600');
+                       }
+                   });
+
+                   acceptEulaBtn.addEventListener('click', function() {
+                       if (!acceptEulaBtn.disabled) {
+                           eulaModal.classList.add('hidden');
+                           form.submit();
+                       }
+                   });
+
+                   rejectEulaBtn.addEventListener('click', function() {
+                       eulaModal.classList.add('hidden');
+                   });
+               });
            </script>
 
            <style>
                .relative {
-                       position: relative;
-                   }
+                   position: relative;
+               }
 
-                   .absolute {
-                       position: absolute;
-                   }
+               .absolute {
+                   position: absolute;
+               }
 
-                   .inset-y-0 {
-                       top: 50%;
-                       transform: translateY(-50%);
-                   }
+               .inset-y-0 {
+                   top: 50%;
+                   transform: translateY(-50%);
+               }
 
-                   .right-0 {
-                       right: 0;
-                   }
+               .right-0 {
+                   right: 0;
+               }
 
-                   .pr-3 {
-                       padding-right: 0.75rem; /* Adjust if needed */
-                   }
+               .-bottom-10 {
+                   bottom: -2.5rem;
+               }
+
+               .pr-3 {
+                   padding-right: 0.75rem;
+               }
+
+               .transform {
+                   transform: translateX(0);
+               }
+
+               .transition-all {
+                   transition-property: all;
+                   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+               }
+
+               .duration-300 {
+                   transition-duration: 300ms;
+               }
+
+               .scale-0 {
+                   transform: scale(0);
+               }
+
+               .scale-100 {
+                   transform: scale(1);
+               }
+
+               .opacity-0 {
+                   opacity: 0;
+               }
+
+               .opacity-100 {
+                   opacity: 1;
+               }
            </style>
 
            @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
@@ -201,40 +446,4 @@
            </x-authentication-card>
        </div>
    </div>
-</x-auth-layout>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const submitButton = form.querySelector('button[type="submit"]');
-    const eulaModal = document.getElementById('eulaModal');
-    const eulaContent = document.getElementById('eulaContent');
-    const acceptEulaBtn = document.getElementById('acceptEula');
-    const rejectEulaBtn = document.getElementById('rejectEula');
-
-    submitButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        eulaModal.classList.remove('hidden');
-    });
-
-    eulaContent.addEventListener('scroll', function() {
-        if (eulaContent.scrollTop + eulaContent.clientHeight >= eulaContent.scrollHeight - 10) {
-            acceptEulaBtn.disabled = false;
-            acceptEulaBtn.classList.remove('bg-gray-300', 'text-gray-600');
-            acceptEulaBtn.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600');
-        }
-    });
-
-    acceptEulaBtn.addEventListener('click', function() {
-        if (!acceptEulaBtn.disabled) {
-            eulaModal.classList.add('hidden');
-            form.submit();
-        }
-    });
-
-    rejectEulaBtn.addEventListener('click', function() {
-        eulaModal.classList.add('hidden');
-    });
-});
-</script>
-
+@endsection

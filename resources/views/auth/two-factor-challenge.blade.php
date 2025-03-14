@@ -1,4 +1,5 @@
-<x-guest-layout>
+@extends('layouts.authentication') 
+    @section('content')
     @section('title', 'GRC - Authentication')
 <!-- Wrapper for background image and blur effect -->
 <div class="relative min-h-screen">
@@ -65,4 +66,4 @@
             </form>
         </div>
     </x-authentication-card>
-</x-guest-layout>
+@endsection

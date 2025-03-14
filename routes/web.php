@@ -18,6 +18,7 @@ use App\Http\Controllers\Alumni\VerificationController;
 use App\Http\Controllers\ScholarshipController;
 use App\Http\Controllers\Admin\ScholarshipTabController;
 use App\Http\Controllers\Admin\ScholarshipFormController;
+use Illuminate\Support\Facades\Response;
 
 /*
 |--------------------------------------------------------------------------
@@ -162,3 +163,7 @@ Route::get('/scholarships/apply', [ScholarshipController::class, 'showApplicatio
 Route::post('/scholarships/apply', [ScholarshipController::class, 'storeApplication'])->name('scholarships.store-application');
 Route::get('/scholarships/download/{formId?}', [ScholarshipController::class, 'downloadForm'])->name('scholarships.download-form');
 Route::get('/scholarships/document/{document}', [ScholarshipController::class, 'viewDocument'])->name('scholarships.view-document');
+
+Route::get('/favicon.ico', function () {
+    return Response::file(public_path('favicon.ico'));
+});

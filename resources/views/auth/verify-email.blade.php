@@ -1,5 +1,6 @@
-<x-guest-layout>
-    @section('title', 'GRC - Verify')
+@extends('layouts.alumni') 
+    @section('content')
+    @section('title', 'GRC - Verify Email')
     <!-- Wrapper for background image and blur effect -->
     <div class="relative min-h-screen">
         <!-- Background image with blur applied -->
@@ -52,4 +53,4 @@
             </div>
         </div>
     </x-authentication-card>
-</x-guest-layout>
+@endsection
