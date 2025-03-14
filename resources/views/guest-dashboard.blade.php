@@ -13,26 +13,42 @@
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">Alumni Statistics</h2>
                 
                 <!-- Top Row Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Total Alumni Card -->
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-md p-4 transform transition-all hover:scale-105">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Alumni</h3>
-                        <p class="text-4xl font-bold text-blue-600">{{ $totalAlumni }}</p>
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 transform transition-all hover:scale-105">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Alumni Tracer Responses</h3>
+                        <p class="font-bold text-blue-600" style="font-size: 150px;">{{ $totalAlumni }}</p>
                     </div>
-            
-                    <!-- Graduation Year Trends Card -->
-                    <div class="bg-gradient-to-br from-red-100 to-yellow-100 rounded-lg shadow-md p-4 transform transition-all hover:scale-105">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v4m-4-4v4m8-4v4M5 8l7-7 7 7M5 8h14v11H5V8z" />
-                            </svg>
-                            Graduation Year Trends
-                        </h3>
-                        <canvas id="graduationChart" class="w-full h-32"></canvas>
-                    </div>                                
+
+                    <!-- Industry Distribution Card -->
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Industry Distribution</h3>
+                        <canvas id="industryChart" class="w-full h-48"></canvas>
+                    </div>
                 </div>
 
-            
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-5">
+                    <!-- Salary Range Distribution Card (Spans 2 columns) -->
+                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-lg p-6 mt-6 col-span-1 md:col-span-2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Salary Range Distribution
+                        </h3>
+                        <canvas id="salaryChart" class="w-full h-64"></canvas>
+                    </div>
+                    <!-- Graduation Year Trends Card -->
+                    <div class="bg-gradient-to-br from-red-100 to-yellow-100 rounded-xl shadow-lg p-6 mt-6 col-span-1 md:col-span-2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v4m-4-4v4m8-4v4M5 8l7-7 7 7M5 8h14v11H5V8z" />
+                            </svg>
+                            Graduates Year Trends
+                        </h3>
+                        <canvas id="graduationChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
 
                 <!-- Bottom Row Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -56,7 +72,7 @@
                             @endforeach
                         </div>
                     </div>
-                
+
                     <!-- Top Degree Programs Card -->
                     <div class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl shadow-lg p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-4">Top Degree Programs</h3>
@@ -152,6 +168,50 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Industry Distribution Chart
+            const industryCtx = document.getElementById('industryChart');
+            if (industryCtx) {
+                new Chart(industryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(@json($topIndustries)),
+                        datasets: [{
+                            data: Object.values(@json($topIndustries)),
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.8)', // Blue
+                                'rgba(16, 185, 129, 0.8)', // Green
+                                'rgba(245, 158, 11, 0.8)', // Yellow
+                                'rgba(239, 68, 68, 0.8)', // Red
+                                'rgba(139, 92, 246, 0.8)'  // Purple
+                            ],
+                            borderColor: [
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(16, 185, 129, 1)',
+                                'rgba(245, 158, 11, 1)',
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(139, 92, 246, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             // Graduation Year Trends Chart
             const gradCtx = document.getElementById('graduationChart');
             if (gradCtx) {
@@ -172,7 +232,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: true, // Allow the chart to fill the container
-                        aspectRatio: 1, // Adjust this value to control the aspect ratio
+                        aspectRatio: 2, // Adjust this value to control the aspect ratio
                         plugins: {
                             legend: {
                                 display: true,
@@ -224,6 +284,91 @@
                                 grid: {
                                     color: 'rgba(209, 213, 219, 0.5)', // Light gray gridlines
                                     borderDash: [5, 5] // Dashed lines
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Salary Range Chart - Changed to line chart
+            const salaryCtx = document.getElementById('salaryChart');
+            if (salaryCtx) {
+                new Chart(salaryCtx, {
+                    type: 'line', // Changed from 'bar' to 'line'
+                    data: {
+                        labels: Object.keys(@json($salaryRanges)),
+                        datasets: [{
+                            label: 'Number of Alumni',
+                            data: Object.values(@json($salaryRanges)),
+                            backgroundColor: 'rgba(245, 158, 11, 0.2)', // Amber with transparency
+                            borderColor: 'rgba(217, 119, 6, 1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: 'rgba(245, 158, 11, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(217, 119, 6, 1)',
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            tension: 0.3, // Adds a slight curve to the line
+                            fill: true // Fill area under the line
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 2,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: '#4B5563',
+                                    font: {
+                                        family: 'Inter, sans-serif',
+                                        size: 14
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#fde68a',
+                                titleColor: '#374151',
+                                bodyColor: '#111827',
+                                titleFont: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                bodyFont: {
+                                    size: 12
+                                },
+                                borderColor: '#F59E0B',
+                                borderWidth: 1,
+                                padding: 10
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#6B7280',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    color: '#6B7280',
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(209, 213, 219, 0.5)',
+                                    borderDash: [5, 5]
                                 }
                             }
                         }

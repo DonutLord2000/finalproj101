@@ -100,15 +100,29 @@ class DashboardController extends Controller
         ->take(10) // Limit numbers to most recent posts, adjust as needed
         ->get();
 
+        // Get total registered users (admin only)
+        $totalUsers = User::count();
+
+        // Get salary ranges with anonymized data
+        $salaryRanges = [
+            'Below php30k' => DB::table('alumni')->where('monthly_salary', '<', 30000)->count(),
+            'php30k-php50k' => DB::table('alumni')->whereBetween('monthly_salary', [30000, 50000])->count(),
+            'php50k-php70k' => DB::table('alumni')->whereBetween('monthly_salary', [50001, 70000])->count(),
+            'php70k-php100k' => DB::table('alumni')->whereBetween('monthly_salary', [70001, 100000])->count(),
+            'php100k-php150k' => DB::table('alumni')->whereBetween('monthly_salary', [100001, 150000])->count(),
+            'Above php150k' => DB::table('alumni')->where('monthly_salary', '>', 150000)->count(),
+        ];
+
         return view('dashboard', compact(
             'dailyActiveUsers', 'weeklyActiveUsers', 'monthlyActiveUsers',
             'dailyActiveUsersGrowth','weeklyActiveUsersGrowth','monthlyActiveUsersGrowth',
-            'newsPosts', 'totalAlumni',
+            'newsPosts', 'totalAlumni', 'totalUsers',
             'genderDistribution',
             'graduationYearTrends',
             'topIndustries',
             'topDegreePrograms',
             'jobTitlesByMajor',
+            'salaryRanges'
         ));
     }
 
@@ -163,6 +177,16 @@ class DashboardController extends Controller
             })
             ->take(5) // Top 5 degree programs only
             ->toArray();
+
+        // Get salary ranges with anonymized data for guests too
+        $salaryRanges = [
+            'Below php30k' => DB::table('alumni')->where('monthly_salary', '<', 30000)->count(),
+            'php30k-php50k' => DB::table('alumni')->whereBetween('monthly_salary', [30000, 50000])->count(),
+            'php50k-php70k' => DB::table('alumni')->whereBetween('monthly_salary', [50001, 70000])->count(),
+            'php70k-php100k' => DB::table('alumni')->whereBetween('monthly_salary', [70001, 100000])->count(),
+            'php100k-php150k' => DB::table('alumni')->whereBetween('monthly_salary', [100001, 150000])->count(),
+            'Above php150k' => DB::table('alumni')->where('monthly_salary', '>', 150000)->count(),
+        ];
     
         // For guest users, we'll set these to 0 or empty values
         $dailyActiveUsers = 0;
@@ -183,7 +207,8 @@ class DashboardController extends Controller
             'graduationYearTrends',
             'topIndustries',
             'topDegreePrograms',
-            'jobTitlesByMajor'
+            'jobTitlesByMajor',
+            'salaryRanges'
         ));
     }
 
