@@ -23,7 +23,7 @@
   
   .lumnix-chatbot-button:hover {
     transform: scale(1.05);
-    background-color: #830909;
+    background-color: #9c0f0f;
   }
   
   .lumnix-chatbot-button-hidden {
@@ -136,7 +136,7 @@
   
   .lumnix-user-message {
     align-self: flex-end;
-    background-color: #df1919;
+    background-color: #cf0303;
     color: white;
     border-bottom-right-radius: 4px;
   }
@@ -183,6 +183,18 @@
     background-color: #e5e7eb;
   }
   
+  /* Disabled state for buttons */
+  .lumnix-suggestion-button:disabled,
+  #lumnix-chat-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  
+  .lumnix-suggestion-button:disabled:hover {
+    background-color: #f3f4f6;
+  }
+  
   .lumnix-chatbot-input {
     padding: 12px;
     border-top: 1px solid #e5e7eb;
@@ -208,6 +220,11 @@
     border-color: #cf0303;
   }
   
+  #lumnix-chat-input:disabled {
+    background-color: #f9fafb;
+    cursor: not-allowed;
+  }
+  
   #lumnix-chat-send {
     background-color: #cf0303;
     color: white;
@@ -223,7 +240,11 @@
   }
   
   #lumnix-chat-send:hover {
-    background-color: #9c0a0a;
+    background-color: #9c0f0f;
+  }
+  
+  #lumnix-chat-send:disabled {
+    background-color: #a5a6f6;
   }
   
   .lumnix-typing-indicator {

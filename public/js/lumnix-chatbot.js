@@ -1,4 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Get or create a persistent sessionId
+    let sessionId
+    // Try to get existing sessionId from localStorage
+    const storedSessionId = localStorage.getItem("lumnix_session_id")
+    if (storedSessionId) {
+      sessionId = storedSessionId
+    } else {
+      // Create a new sessionId if none exists
+      sessionId = "lumnix_" + Date.now().toString()
+      // Store it for future page loads
+      localStorage.setItem("lumnix_session_id", sessionId)
+    }
+  
     // Create the chatbot container
     const chatbotContainer = document.createElement("div")
     chatbotContainer.className = "lumnix-chatbot-container"
@@ -26,10 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
                       Career Trajectory
                   </button>
                   <button class="lumnix-suggestion-button" data-query="Career insight comparison of my profile to others">
-                      Career Comparison
+                      Compare to Others
                   </button>
                   <button class="lumnix-suggestion-button" data-query="Career recommendations based on my experience or education">
-                      Career Recommendations
+                      Recommendations
                   </button>
               </div>
               <div class="lumnix-chatbot-input">
@@ -55,10 +68,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const suggestionButtons = document.querySelectorAll(".lumnix-suggestion-button")
   
     // Chat state
-    const chatHistory = []
-    const sessionId = Date.now().toString()
     let isFullscreen = false
     let userName = "" // Will be populated when we get user data
+    let isProcessing = false // Flag to track if the chatbot is processing a response
+  
+    // Initialize chat history from localStorage or create new array
+    let chatHistory = []
+    const localStorageKey = "lumnix_chat_history"
+  
+    // Try to load existing chat history from localStorage
+    try {
+      const savedHistory = localStorage.getItem(localStorageKey)
+      console.log("Retrieved from localStorage:", savedHistory)
+  
+      if (savedHistory) {
+        chatHistory = JSON.parse(savedHistory)
+        console.log("Parsed chat history:", chatHistory)
+  
+        // If there's saved history, populate the chat UI with previous messages
+        if (chatHistory.length > 0) {
+          console.log("Restoring", chatHistory.length, "messages to UI")
+          chatHistory.forEach((item) => {
+            const sender = item.role === "user" ? "user" : "bot"
+            addMessageToUI(item.content, sender, false) // false means don't update localStorage again
+          })
+        }
+      } else {
+        console.log("No saved chat history found")
+      }
+    } catch (error) {
+      console.error("Error loading chat history from localStorage:", error)
+      // If there's an error, start with a fresh history
+      chatHistory = []
+    }
   
     // Toggle chat window
     chatButton.addEventListener("click", () => {
@@ -106,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle suggestion button clicks
     suggestionButtons.forEach((button) => {
       button.addEventListener("click", () => {
+        if (isProcessing) return // Don't allow clicks while processing
         const query = button.getAttribute("data-query")
         chatInput.value = query
         sendMessage()
@@ -113,18 +156,52 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   
     // Send message on button click
-    chatSend.addEventListener("click", sendMessage)
+    chatSend.addEventListener("click", () => {
+      if (!isProcessing) {
+        sendMessage()
+      }
+    })
   
     // Send message on Enter key (but allow Shift+Enter for new lines)
     chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey && !isProcessing) {
         e.preventDefault()
         sendMessage()
       }
     })
   
+    // Function to disable input controls
+    function disableInputControls() {
+      isProcessing = true
+      chatInput.disabled = true
+      chatSend.disabled = true
+  
+      // Disable all suggestion buttons
+      suggestionButtons.forEach((button) => {
+        button.disabled = true
+      })
+    }
+  
+    // Function to enable input controls
+    function enableInputControls() {
+      isProcessing = false
+      chatInput.disabled = false
+      chatSend.disabled = false
+  
+      // Enable all suggestion buttons
+      suggestionButtons.forEach((button) => {
+        button.disabled = false
+      })
+  
+      // Focus the input field for better UX
+      chatInput.focus()
+    }
+  
     // Fetch user name and send welcome message
     function fetchUserNameAndWelcome() {
+      // Disable controls while fetching
+      disableInputControls()
+  
       // Show typing indicator
       const typingIndicator = document.createElement("div")
       typingIndicator.className = "lumnix-message lumnix-bot-message lumnix-typing"
@@ -156,6 +233,9 @@ document.addEventListener("DOMContentLoaded", () => {
           // Add welcome message
           const welcomeMessage = `Hello ${userName}! I'm Lumnix, your personal career assistant. How can I help you today? You can click on the suggestion buttons below or type your own question.`
           addMessage(welcomeMessage, "bot")
+  
+          // Re-enable controls after welcome message
+          enableInputControls()
         })
         .catch((error) => {
           console.error("Error fetching user info:", error)
@@ -170,6 +250,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const welcomeMessage =
             "Hello there! I'm Lumnix, your personal career assistant. How can I help you today? You can click on the suggestion buttons below or type your own question."
           addMessage(welcomeMessage, "bot")
+  
+          // Re-enable controls after welcome message
+          enableInputControls()
         })
     }
   
@@ -177,6 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function sendMessage() {
       const message = chatInput.value.trim()
       if (!message) return
+  
+      // Disable input controls while processing
+      disableInputControls()
   
       // Add user message to chat
       addMessage(message, "user")
@@ -199,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // Include session cookie
           "X-Requested-With": "XMLHttpRequest",
         },
-        credentials: "same-origin", // Important for sending cookies
+        credentials: "same-origin",
         body: JSON.stringify({
           message: message,
           sessionId: sessionId,
@@ -215,6 +301,9 @@ document.addEventListener("DOMContentLoaded", () => {
   
           // Add bot response to chat
           addMessage(data.response, "bot")
+  
+          // Re-enable input controls after response
+          enableInputControls()
         })
         .catch((error) => {
           console.error("Error:", error)
@@ -227,11 +316,24 @@ document.addEventListener("DOMContentLoaded", () => {
   
           // Add error message
           addMessage("Sorry, I encountered an error. Please try again later.", "bot")
+  
+          // Re-enable input controls after error
+          enableInputControls()
         })
     }
   
-    // Add message to chat
-    function addMessage(message, sender) {
+    // Add a function to save chat history to localStorage
+    function saveHistoryToLocalStorage() {
+      try {
+        console.log("Saving chat history to localStorage:", chatHistory)
+        localStorage.setItem(localStorageKey, JSON.stringify(chatHistory))
+      } catch (error) {
+        console.error("Error saving chat history to localStorage:", error)
+      }
+    }
+  
+    // Function to add message to UI
+    function addMessageToUI(message, sender, updateStorage = true) {
       const messageElement = document.createElement("div")
       messageElement.className = `lumnix-message lumnix-${sender}-message`
   
@@ -259,12 +361,38 @@ document.addEventListener("DOMContentLoaded", () => {
       messageElement.innerHTML = `<div class="lumnix-message-content">${formattedMessage}</div>`
       chatMessages.appendChild(messageElement)
       chatMessages.scrollTop = chatMessages.scrollHeight
+    }
+  
+    // Function to add message to chat (both UI and data)
+    function addMessage(message, sender) {
+      // Add to UI
+      addMessageToUI(message, sender)
   
       // Update chat history
       chatHistory.push({
         role: sender === "user" ? "user" : "assistant",
         content: message,
       })
+  
+      // Save to localStorage
+      saveHistoryToLocalStorage()
     }
+  
+    // Add a function to clear chat history (to be called on logout)
+    function clearChatHistory() {
+      chatHistory = []
+      localStorage.removeItem(localStorageKey)
+  
+      // Clear the chat UI
+      while (chatMessages.firstChild) {
+        chatMessages.removeChild(chatMessages.firstChild)
+      }
+    }
+  
+    // Add event listener for user logout (if you have a logout button)
+    // This is a placeholder - you'll need to connect it to your actual logout process
+    document.addEventListener("lumnix-user-logout", () => {
+      clearChatHistory()
+    })
   })
   

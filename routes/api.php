@@ -29,3 +29,8 @@ Route::post('/chat', function (Request $request) {
 // Lumnix Chatbot API endpoints
 Route::post('/lumnix-chat', [LumnixChatController::class, 'chat'])->middleware('web');
 Route::get('/lumnix-user-info', [LumnixChatController::class, 'getUserInfo'])->middleware('web');
+
+// Add a new route for clearing chat history
+// Add this route after the existing Lumnix chatbot API endpoints
+
+Route::post('/lumnix-clear-history', [LumnixChatController::class, 'clearChatHistory'])->middleware('web');

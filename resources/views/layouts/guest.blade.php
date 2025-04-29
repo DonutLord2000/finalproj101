@@ -15,6 +15,9 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        <!-- Lumnix Chatbot Styles -->
+        <link href="{{ asset('css/lumnix-chatbot.css') }}" rel="stylesheet">
+        
         <!-- Styles -->
         @livewireStyles
     </head>
@@ -44,7 +47,16 @@
 
         @livewireScripts
         
-        <x-floating-chatbot />
+        <!-- Lumnix Chatbot Script -->
+        <script src="{{ asset('js/lumnix-chatbot.js') }}"></script>
+
+        @if(session('clear_chat_history'))
+        <script>
+            // Clear Lumnix chat history from localStorage
+            localStorage.removeItem('lumnix_chat_history');
+            localStorage.removeItem('lumnix_session_id');
+        </script>
+        @endif
         <!-- Footer -->
             <footer class="bg-white-100">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

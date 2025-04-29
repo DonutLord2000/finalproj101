@@ -81,6 +81,14 @@
             </div>
         </footer>
         <!-- Lumnix Chatbot Script -->
-    <script src="{{ asset('js/lumnix-chatbot.js') }}"></script>
+        <script src="{{ asset('js/lumnix-chatbot.js') }}"></script>
+
+        @if(session('clear_chat_history'))
+        <script>
+            // Clear Lumnix chat history from localStorage
+            localStorage.removeItem('lumnix_chat_history');
+            localStorage.removeItem('lumnix_session_id');
+        </script>
+        @endif
     </body>
 </html>
