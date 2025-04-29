@@ -21,10 +21,21 @@ class Profile extends Model
 
     public function getProfilePictureUrlAttribute()
     {
-        if (!$this->profile_picture) {
-            return asset('storage/profile-photos/default.png');
+        // If user has a profile picture, return the S3 URL
+        if ($this->profile_picture) {
+            return Storage::disk('s3')->temporaryUrl($this->profile_picture, now()->addMinutes(5));
         }
-        return Storage::disk('s3')->temporaryUrl($this->profile_picture, now()->addMinutes(5));
+        
+        // Default image path
+        $defaultImagePath = 'images/default.jpg';
+        
+        // Check if the default image exists in the public directory
+        if (file_exists(public_path($defaultImagePath))) {
+            return asset($defaultImagePath);
+        }
+        
+        // Fallback to a known path or placeholder
+        return asset('images/placeholder.png');
     }
 
     public function getCoverPictureUrlAttribute()

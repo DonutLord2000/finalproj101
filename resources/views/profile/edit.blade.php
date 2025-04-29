@@ -41,7 +41,7 @@
                                             alt="{{ $user->name }}"
                                             class="w-full h-full object-cover">
                                     @else
-                                        <img src="{{ asset('storage/profile-photos/default.png') }}"
+                                        <img src="{{ $user->profile?->profile_picture_url }}"
                                             alt="{{ $user->name }}"
                                             class="w-full h-full object-cover">
                                     @endif

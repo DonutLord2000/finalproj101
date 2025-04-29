@@ -39,10 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
                       Career Trajectory
                   </button>
                   <button class="lumnix-suggestion-button" data-query="Career insight comparison of my profile to others">
-                      Compare to Others
+                      Career Comparison
                   </button>
                   <button class="lumnix-suggestion-button" data-query="Career recommendations based on my experience or education">
-                      Recommendations
+                      Career Recommendationss
                   </button>
               </div>
               <div class="lumnix-chatbot-input">

@@ -10,7 +10,7 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-lg sm:rounded-lg p-6 mt-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Alumni Statistics</h2>
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Alumni Tracer Statistics</h2>
                 
                 <!-- Top Row Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
