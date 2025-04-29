@@ -15,6 +15,8 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
+        <!-- Lumnix Chatbot Styles -->
+        <link href="{{ asset('css/lumnix-chatbot.css') }}" rel="stylesheet">
 
         <!-- Styles -->
         @livewireStyles
@@ -39,7 +41,7 @@
 
         @livewireScripts
         
-        <x-floating-chatbot />
+        
         <!-- Footer -->
         <footer class="bg-white-100">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -78,5 +80,7 @@
                 </div>
             </div>
         </footer>
+        <!-- Lumnix Chatbot Script -->
+    <script src="{{ asset('js/lumnix-chatbot.js') }}"></script>
     </body>
 </html>

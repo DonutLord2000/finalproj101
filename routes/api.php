@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LumnixChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,3 +25,7 @@ Route::post('/chat', function (Request $request) {
     // Example response logic
     return response()->json(['message' => "You said: $message"]);
 });
+
+// Lumnix Chatbot API endpoints
+Route::post('/lumnix-chat', [LumnixChatController::class, 'chat'])->middleware('web');
+Route::get('/lumnix-user-info', [LumnixChatController::class, 'getUserInfo'])->middleware('web');
