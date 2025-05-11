@@ -34,7 +34,7 @@ class ProfileController extends Controller
             });
         }
 
-        $profiles = $query->paginate(20);
+        $profiles = $query->paginate(26);
 
         if ($request->ajax()) {
             return view('alumni.partials.profile-cards', compact('profiles'))->render();

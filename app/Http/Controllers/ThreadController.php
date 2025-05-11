@@ -68,7 +68,7 @@ class ThreadController extends Controller
             $query->latest();
         }
         
-        $threads = $query->paginate(15)->withQueryString();
+        $threads = $query->paginate(perPage: 20)->withQueryString();
         
         return view('threads.index', compact('threads'));
     }
