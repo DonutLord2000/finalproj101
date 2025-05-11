@@ -63,7 +63,7 @@
                     </div>
                     <!-- Profile Info -->
                     <div class="pt-20 px-6 pb-6">
-                        <div class="flex items-start justify-between">
+                        <div class="flex items-start justify-between mb-4">
                             <div>
                                 <div class="flex items-center gap-2">
                                     <h1 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h1>
@@ -74,20 +74,30 @@
                                             </svg>
                                             Verified Alumni
                                         </span>
-                                    @else
-                                        <button type="button" onclick="document.getElementById('verification-form').classList.toggle('hidden')" class="text-blue-600 text-sm hover:underline">
-                                            Verify that youre an alumni
-                                        </button>
                                     @endif
                                 </div>
-                                <p class="text-gray-600 mt-1">{{ $user->profile?->address ?: 'Add your location' }}</p>
-                                <p class="text-blue-600 hover:underline cursor-pointer mt-1">Contact info</p>
                             </div>
                             <button type="button" onclick="document.getElementById('edit-form').classList.toggle('hidden')" class="p-2 text-gray-400 hover:text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
+                        </div>
+
+                        <!-- Always visible profile information -->
+                        <div class="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="w-24 flex-shrink-0 text-gray-500 font-medium">Location:</div>
+                                <div class="flex-grow text-gray-800">{{ $user->profile?->address ?: 'Not specified' }}</div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-24 flex-shrink-0 text-gray-500 font-medium">Contact:</div>
+                                <div class="flex-grow text-gray-800">{{ $user->profile?->contact_number ?: 'Not specified' }}</div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-24 flex-shrink-0 text-gray-500 font-medium">Bio:</div>
+                                <div class="flex-grow text-gray-800">{{ $user->profile?->bio ?: 'No bio provided' }}</div>
+                            </div>
                         </div>
 
                         <!-- Verification Section -->
@@ -132,9 +142,16 @@
                                     @endif
                     
                                     @if(!$pendingRequest)
-                                        <button type="button" onclick="document.getElementById('verification-form').classList.toggle('hidden')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                            Request Verification
-                                        </button>
+                                        @if(!$user->profile?->address)
+                                            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+                                                <p class="font-bold">Location Required</p>
+                                                <p>You must add your location before requesting verification. <button type="button" onclick="document.getElementById('edit-form').classList.remove('hidden'); document.getElementById('address').focus();" class="text-blue-600 hover:underline">Add location now</button></p>
+                                            </div>
+                                        @else
+                                            <button type="button" onclick="document.getElementById('verification-form').classList.toggle('hidden')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                                Request Verification
+                                            </button>
+                                        @endif
                     
                                         <form id="verification-form" action="{{ route('verification.request') }}" method="POST" enctype="multipart/form-data" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
                                             @csrf
@@ -687,6 +704,16 @@
                 fileList.appendChild(fileItem);
             });
         });
+    @if(!$user->profile?->is_verified)
+        @if(!$user->profile?->address)
+            <button type="button" onclick="document.getElementById('edit-form').classList.remove('hidden'); document.getElementById('address').focus();" class="text-blue-600 text-sm hover:underline">
+                Add location to verify
+            </button>
+        @else
+            <button type="button" onclick="document.getElementById('verification-form').classList.toggle('hidden')" class="text-blue-600 text-sm hover:underline">
+                Verify that you're an alumni
+            </button>
+        @endif
+    @endif
     </script>
 </x-app-layout>
-
