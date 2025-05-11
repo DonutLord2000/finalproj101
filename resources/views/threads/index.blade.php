@@ -37,7 +37,7 @@
                                 @elseif(request('role') == 'guest')
                                     Guest
                                 @else
-                                    All Roles
+                                    All Post
                                 @endif
                             </span>
                             <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -46,7 +46,7 @@
                         </button>
                         <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                             <div class="py-1" role="menu" aria-orientation="vertical">
-                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'all'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ !request('role') || request('role') == 'all' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">All Roles</a>
+                                <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'all'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ !request('role') || request('role') == 'all' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">All Post</a>
                                 <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'admin'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'admin' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Admin</a>
                                 <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'student'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'student' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Student</a>
                                 <a href="{{ route('threads.index', array_merge(request()->except('role'), ['role' => 'alumni'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request('role') == 'alumni' ? 'bg-gray-100 font-medium' : '' }}" role="menuitem">Alumni</a>
@@ -143,7 +143,7 @@
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <div class="flex items-center space-x-3">
-                                <img src="{{ $thread->user->profile_photo_url }}" alt="{{ $thread->user->name }}" class="w-10 h-10 rounded-full">
+                                <img src="{{ $thread->user->profile?->profile_picture_url ?? $thread->user->profile_photo_url }}" alt="{{ $thread->user->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-300">
                                 <div>
                                     <h4 class="text-lg font-semibold text-gray-900">
                                         <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
@@ -231,38 +231,83 @@
                     </div>
                     <div x-show="isCommentsOpen" class="px-6 py-4 bg-gray-100">
                         @foreach ($thread->comments as $comment)
-                            <div class="flex items-start space-x-3 mb-4">
-                                <img src="{{ $comment->user->profile_photo_url }}" alt="{{ $comment->user->name }}" class="w-8 h-8 rounded-full">
-                                <div>
-                                    <p class="font-semibold text-gray-900">
-                                        <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
-                                            {{ $comment->user->name }}
-                                        </a>
-                                        @php
-                                            $bgColor = match($comment->user->role) {
-                                                'alumni' => 'bg-green-200 text-green-800',
-                                                'admin' => 'bg-red-200 text-red-800',
-                                                'student' => 'bg-blue-200 text-blue-800',
-                                                default => 'bg-gray-200 text-gray-700',
-                                            };
-                                        @endphp
+                        <div class="flex items-start space-x-3 mb-4">
+                            <img src="{{ $comment->user->profile?->profile_picture_url ?? $comment->user->profile_photo_url }}" alt="{{ $comment->user->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300">
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-semibold text-gray-900">
+                                            <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
+                                                {{ $comment->user->name }}
+                                            </a>
+                                            @php
+                                                $bgColor = match($comment->user->role) {
+                                                    'alumni' => 'bg-green-200 text-green-800',
+                                                    'admin' => 'bg-red-200 text-red-800',
+                                                    'student' => 'bg-blue-200 text-blue-800',
+                                                    default => 'bg-gray-200 text-gray-700',
+                                                };
+                                            @endphp
 
-                                        <span class="text-xs {{ $bgColor }} px-2 py-1 rounded-full ml-2">
-                                            {{ $comment->user->role }}
-                                        </span>
-                                    </p>
-                                    <p class="text-xs text-gray-500 mt-1">{{ $comment->created_at->format('M d, Y h:i A') }}</p>
-                                    <p class="text-sm text-gray-700 mt-2">{{ $comment->content }}</p>
+                                            <span class="text-xs {{ $bgColor }} px-2 py-1 rounded-full ml-2">
+                                                {{ $comment->user->role }}
+                                            </span>
+                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            {{ $comment->created_at->format('M d, Y h:i A') }}
+                                            
+                                            @if($comment->isEdited())
+                                                <span class="ml-2 italic">
+                                                    • edited by {{ $comment->editor->id === $comment->user_id ? $comment->user->name : 'admin: ' . $comment->editor->name }} 
+                                                    at {{ $comment->edited_at->format('M d, Y h:i A') }}
+                                                </span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Moved dropdown to top right -->
+                                    @if((auth()->user()->id === $comment->user_id || auth()->user()->role === 'admin') && !$comment->isDeleted())
+                                        <div class="relative">
+                                            <button type="button" class="inline-flex justify-center w-6 h-6 rounded-full border border-gray-300 shadow-sm bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-gray-100 focus:ring-indigo-500" id="comment-options-menu-index-{{ $comment->id }}">
+                                                <svg class="w-4 h-4 m-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                </svg>
+                                            </button>
+                                            <!-- Dropdown positioned to open below and aligned to the right -->
+                                            <div class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden" id="comment-dropdown-menu-index-{{ $comment->id }}" style="z-index: 9999;">
+                                                <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="comment-options-menu-index-{{ $comment->id }}">
+                                                    <a href="{{ route('comments.edit', $comment) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Edit</a>
+                                                    <form action="{{ route('comments.destroy', $comment) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                                
+                                <div class="text-sm text-gray-700 mt-2">
+                                    @if($comment->isDeleted())
+                                        <p class="italic text-gray-500">
+                                            Comment deleted by {{ $comment->deleter->id === $comment->user_id ? $comment->user->name : 'admin: ' . $comment->deleter->name }}
+                                            at {{ $comment->deleted_at->format('M d, Y h:i A') }}
+                                        </p>
+                                    @else
+                                        <p>{{ $comment->content }}</p>
+                                    @endif
                                 </div>
                             </div>
-                        @endforeach
+                        </div>
+                    @endforeach
                         <form action="{{ route('threads.comments.store', $thread) }}" method="POST" class="mt-4">
                             @csrf
                             <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                                <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full">
+                                <img src="{{ auth()->user()->profile?->profile_picture_url ?? auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300">
                                 <input type="text" name="content" placeholder="Write a comment..." class="flex-grow border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border rounded-md">
                                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Post
+                                    Comment
                                 </button>
                             </div>
                         </form>
@@ -346,6 +391,71 @@
             });
         });
     });
+    document.addEventListener('DOMContentLoaded', function() {
+    // Handle all dropdown menus
+    const dropdownButtons = document.querySelectorAll('[id^="comment-options-menu-"]');
+    
+    dropdownButtons.forEach(button => {
+        const id = button.id;
+        let dropdownId;
+        
+        // Determine the correct dropdown ID based on the button ID
+        if (id.startsWith('comment-options-menu-index-')) {
+            dropdownId = id.replace('comment-options-menu-index-', 'comment-dropdown-menu-index-');
+        } else if (id.startsWith('comment-options-menu-')) {
+            dropdownId = id.replace('comment-options-menu-', 'comment-dropdown-menu-');
+        } else if (id.startsWith('options-menu-')) {
+            dropdownId = id.replace('options-menu-', 'dropdown-menu-');
+        }
+        
+        const dropdownMenu = document.getElementById(dropdownId);
+        
+        if (button && dropdownMenu) {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation();
+                
+                // Close all other dropdowns first
+                document.querySelectorAll('.comment-dropdown-menu, [id^="dropdown-menu-"]').forEach(menu => {
+                    if (menu.id !== dropdownId) {
+                        menu.classList.add('hidden');
+                    }
+                });
+                
+                // Toggle the current dropdown
+                dropdownMenu.classList.toggle('hidden');
+                
+                // Check if dropdown would go off-screen to the right
+                if (!dropdownMenu.classList.contains('hidden')) {
+                    const rect = dropdownMenu.getBoundingClientRect();
+                    const parentRect = button.parentElement.getBoundingClientRect();
+                    
+                    // If dropdown would go off right edge of screen
+                    if (rect.right > window.innerWidth) {
+                        dropdownMenu.classList.add('dropdown-right');
+                    } else {
+                        dropdownMenu.classList.remove('dropdown-right');
+                    }
+                    
+                    // If dropdown would go off bottom of screen, position it above the button
+                    if (rect.bottom > window.innerHeight) {
+                        dropdownMenu.style.bottom = parentRect.height + 'px';
+                        dropdownMenu.style.top = 'auto';
+                    } else {
+                        dropdownMenu.style.top = '';
+                        dropdownMenu.style.bottom = '';
+                    }
+                }
+            });
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!button.contains(event.target)) {
+                dropdownMenu.classList.add('hidden');
+            }
+        });
+    });
+});
 </script>
 @endpush
 </x-app-layout>

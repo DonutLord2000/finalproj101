@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Alumni\AlumniController;
 use App\Http\Controllers\ThreadController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NewsPostController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\ActivityLogController;
@@ -166,4 +167,11 @@ Route::get('/scholarships/document/{document}', [ScholarshipController::class, '
 
 Route::get('/favicon.ico', function () {
     return Response::file(public_path('favicon.ico'));
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Comment routes
+    Route::get('/comments/{comment}/edit', [CommentController::class, 'edit'])->name('comments.edit');
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 });

@@ -20,7 +20,26 @@
 
         <!-- Styles -->
         @livewireStyles
-
+        <style>
+            #dropdown-portal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 0;
+                overflow: visible;
+                pointer-events: none;
+            }
+            
+            #dropdown-portal .dropdown-content {
+                position: absolute;
+                background: white;
+                border-radius: 0.375rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                pointer-events: auto;
+            }
+        </style>
     </head>
     <body class="font-sans antialiased">
         <x-banner />
@@ -90,5 +109,6 @@
             localStorage.removeItem('lumnix_session_id');
         </script>
         @endif
+        <div id="dropdown-portal" class="relative z-[9999]"></div>
     </body>
 </html>
