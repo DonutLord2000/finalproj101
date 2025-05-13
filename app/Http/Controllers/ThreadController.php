@@ -7,21 +7,31 @@ use App\Models\Comment;
 use App\Models\Reaction; 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Services\ContentModerationService;
+use Illuminate\Support\Facades\Log;
 
 class ThreadController extends Controller
 {
+    protected $moderationService;
+    
+    public function __construct(ContentModerationService $moderationService)
+    {
+        $this->moderationService = $moderationService;
+    }
+    
     public function index(Request $request)
     {
         $query = Thread::withCount(['comments', 'upvotes', 'hearts'])
             ->with('user');
         
-        // Search functionality
+        // Improved search functionality
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('content', 'like', "%{$search}%")
+                // Use LIKE with wildcards for partial matching
+                $q->whereRaw('LOWER(content) LIKE ?', ['%' . strtolower($search) . '%'])
                   ->orWhereHas('user', function($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', "%{$search}%");
+                      $userQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
                   });
             });
         }
@@ -85,14 +95,47 @@ class ThreadController extends Controller
     {
         $validated = $request->validate([
             'title' => 'nullable|max:255', // Make title optional
-            'content' => 'required',
+            'content' => 'required|max:10000', // Add max length validation
         ]);
+        
+        // Count words and validate maximum words
+        $wordCount = str_word_count($validated['content']);
+        if ($wordCount > 700) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Content exceeds the maximum limit of 700 words.'
+            ], 422);
+        }
+        
+        // Check content with OpenAI moderation
+        Log::info('Checking thread content with moderation service', ['content_length' => strlen($validated['content'])]);
+        $moderationResult = $this->moderationService->moderateContent($validated['content']);
+        
+        if (!$moderationResult['safe']) {
+            Log::warning('Thread content failed moderation check', ['reason' => $moderationResult['message']]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Your post contains inappropriate content: ' . $moderationResult['message']
+            ], 422);
+        }
     
         // Set default title as user's name if title is not provided
         $validated['title'] = $validated['title'] ?? auth()->user()->name;
     
         $thread = auth()->user()->threads()->create($validated);
+        
+        Log::info('Thread created successfully', ['thread_id' => $thread->id]);
     
+        // Check if request wants JSON
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Thread created successfully',
+                'redirect' => route('threads.show', $thread)
+            ]);
+        }
+        
+        // Regular form submission fallback
         return redirect()->route('threads.show', $thread);
     }
 
@@ -137,15 +180,48 @@ class ThreadController extends Controller
     public function storeComment(Request $request, Thread $thread)
     {
         $validated = $request->validate([
-            'content' => 'required',
+            'content' => 'required|max:10000',
         ]);
+        
+        // Count words and validate maximum words
+        $wordCount = str_word_count($validated['content']);
+        if ($wordCount > 700) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Comment exceeds the maximum limit of 700 words.'
+            ], 422);
+        }
+        
+        // Check content with OpenAI moderation
+        Log::info('Checking comment content with moderation service', ['content_length' => strlen($validated['content'])]);
+        $moderationResult = $this->moderationService->moderateContent($validated['content']);
+        
+        if (!$moderationResult['safe']) {
+            Log::warning('Comment content failed moderation check', ['reason' => $moderationResult['message']]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Your comment contains inappropriate content: ' . $moderationResult['message']
+            ], 422);
+        }
 
-        $thread->comments()->create([
+        $comment = $thread->comments()->create([
             'user_id' => auth()->id(),
             'content' => $validated['content'],
         ]);
+        
+        Log::info('Comment created successfully', ['comment_id' => $comment->id]);
 
-        return back();
+        // Check if request wants JSON
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment added successfully',
+                'redirect' => route('threads.show', $thread->id)
+            ]);
+        }
+        
+        // Regular form submission fallback
+        return redirect()->route('threads.show', $thread);
     }
 
     public function getReactionStatus(Thread $thread)
@@ -168,12 +244,39 @@ class ThreadController extends Controller
         $this->authorize('update', $thread);
         
         $validated = $request->validate([
-            'content' => 'required',
+            'content' => 'required|max:10000',
         ]);
+        
+        // Count words and validate maximum words
+        $wordCount = str_word_count($validated['content']);
+        if ($wordCount > 700) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Content exceeds the maximum limit of 700 words.'
+            ], 422);
+        }
+        
+        // Check content with OpenAI moderation
+        Log::info('Checking thread update content with moderation service');
+        $moderationResult = $this->moderationService->moderateContent($validated['content']);
+        
+        if (!$moderationResult['safe']) {
+            Log::warning('Thread update content failed moderation check', ['reason' => $moderationResult['message']]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Your post contains inappropriate content: ' . $moderationResult['message']
+            ], 422);
+        }
 
         $thread->update($validated);
+        
+        Log::info('Thread updated successfully', ['thread_id' => $thread->id]);
 
-        return redirect()->route('threads.show', $thread);
+        return response()->json([
+            'success' => true,
+            'message' => 'Thread updated successfully',
+            'redirect' => route('threads.show', $thread)
+        ]);
     }
 
     public function destroy(Thread $thread)
@@ -183,5 +286,28 @@ class ThreadController extends Controller
         $thread->delete();
 
         return redirect()->route('threads.index');
+    }
+    
+    public function checkContent(Request $request)
+    {
+        $content = $request->input('content');
+        
+        // Count words
+        $wordCount = str_word_count($content);
+        $isOverLimit = $wordCount > 700;
+        
+        // Only check moderation if content is substantial
+        $moderationResult = ['safe' => true, 'message' => null];
+        if (strlen($content) > 10) {
+            Log::info('Checking content via API endpoint', ['content_length' => strlen($content)]);
+            $moderationResult = $this->moderationService->moderateContent($content);
+        }
+        
+        return response()->json([
+            'wordCount' => $wordCount,
+            'isOverLimit' => $isOverLimit,
+            'isSafe' => $moderationResult['safe'],
+            'moderationMessage' => $moderationResult['message']
+        ]);
     }
 }

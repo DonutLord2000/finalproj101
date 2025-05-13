@@ -5,9 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use App\Models\Thread;
 use Illuminate\Http\Request;
+use App\Services\ContentModerationService;
+use Illuminate\Support\Facades\Log;
 
 class CommentController extends Controller
 {
+    protected $moderationService;
+    
+    public function __construct(ContentModerationService $moderationService)
+    {
+        $this->moderationService = $moderationService;
+    }
+    
     public function edit(Comment $comment)
     {
         // Check if user can edit this comment
@@ -22,8 +31,31 @@ class CommentController extends Controller
         $this->authorize('update', $comment);
         
         $validated = $request->validate([
-            'content' => 'required',
+            'content' => 'required|max:10000',
         ]);
+        
+        // Count words and validate maximum words
+        $wordCount = str_word_count($validated['content']);
+        
+        // Count words and validate maximum words
+        if ($wordCount > 700) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Comment exceeds the maximum limit of 700 words.'
+            ], 422);
+        }
+        
+        // Check content with OpenAI moderation
+        Log::info('Checking comment update content with moderation service');
+        $moderationResult = $this->moderationService->moderateContent($validated['content']);
+        
+        if (!$moderationResult['safe']) {
+            Log::warning('Comment update content failed moderation check', ['reason' => $moderationResult['message']]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Your comment contains inappropriate content: ' . $moderationResult['message']
+            ], 422);
+        }
 
         // Store original content before updating
         $originalContent = $comment->content;
@@ -34,7 +66,19 @@ class CommentController extends Controller
             'edited_at' => now(),
             'edited_by' => auth()->id(),
         ]);
+        
+        Log::info('Comment updated successfully', ['comment_id' => $comment->id]);
 
+        // Check if request wants JSON
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment updated successfully',
+                'redirect' => route('threads.show', $comment->thread_id)
+            ]);
+        }
+        
+        // Regular form submission fallback
         return redirect()->route('threads.show', $comment->thread_id);
     }
 
@@ -50,5 +94,28 @@ class CommentController extends Controller
         ]);
 
         return redirect()->route('threads.show', $comment->thread_id);
+    }
+    
+    public function checkContent(Request $request)
+    {
+        $content = $request->input('content');
+        
+        // Count words
+        $wordCount = str_word_count($content);
+        $isOverLimit = $wordCount > 700;
+        
+        // Only check moderation if content is substantial
+        $moderationResult = ['safe' => true, 'message' => null];
+        if (strlen($content) > 10) {
+            Log::info('Checking content via API endpoint', ['content_length' => strlen($content)]);
+            $moderationResult = $this->moderationService->moderateContent($content);
+        }
+        
+        return response()->json([
+            'wordCount' => $wordCount,
+            'isOverLimit' => $isOverLimit,
+            'isSafe' => $moderationResult['safe'],
+            'moderationMessage' => $moderationResult['message']
+        ]);
     }
 }

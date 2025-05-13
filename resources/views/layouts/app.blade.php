@@ -110,5 +110,44 @@
         </script>
         @endif
         <div id="dropdown-portal" class="relative z-[9999]"></div>
+        <style>
+            /* Toast animations */
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            
+            /* Word counter styles */
+            .word-counter {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 0.25rem;
+                font-size: 0.875rem;
+                color: #6b7280;
+            }
+            
+            .word-count.over-limit {
+                color: #ef4444;
+                font-weight: bold;
+            }
+            
+            /* Loading spinner animation */
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            
+            .animate-spin {
+                animation: spin 1s linear infinite;
+            }
+        </style>
+        <!-- Toast container -->
+        <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-4 mt-12"></div>
+        
     </body>
 </html>

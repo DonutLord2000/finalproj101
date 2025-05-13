@@ -1,5 +1,41 @@
 <x-app-layout>
     @section('title', 'GRC - Threads')
+    @push('styles')
+    <style>
+        /* Ensure word counter is always visible */
+        .word-counter {
+            display: flex !important;
+            justify-content: space-between !important;
+            margin-top: 0.25rem !important;
+            font-size: 0.875rem !important;
+            color: #6b7280 !important;
+        }
+        
+        /* Style for the loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Improved warning message styling */
+        .text-red-500.text-sm.mt-1:not(.hidden) {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            background-color: #FEF2F2;
+            border: 1px solid #FECACA;
+            margin-top: 0.5rem;
+        }
+    </style>
+    @endpush
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 mx-auto w-full lg:w-[70rem]">
@@ -158,163 +194,170 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg shadow-xl mx-auto w-full lg:w-[70rem]">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">Add a comment</h3>
-                    <form action="{{ route('threads.comments.store', $thread) }}" method="POST">
-                        @csrf
-                        <div class="flex items-start space-x-3">
-                            <img src="{{ auth()->user()->profile?->profile_picture_url ?? auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300 mr-2">
-                                <input type="text" name="content" placeholder="Write a comment..." class="flex-grow border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border rounded-md mr-2">
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    Post
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+    <div class="p-6">
+        <h3 class="text-lg font-semibold mb-4">Add a comment</h3>
+        <form action="{{ route('threads.comments.store', $thread) }}" method="POST" id="comment-form">
+            @csrf
+            <div class="flex flex-col w-full">
+                <div class="flex items-start space-x-3">
+                    <img src="{{ auth()->user()->profile?->profile_picture_url ?? auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300 flex-shrink-0">
+                    <div class="flex-grow">
+                        <textarea name="content" placeholder="Write a comment..." class="w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 block shadow-sm sm:text-sm border rounded-md" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="text-red-500 text-sm mt-2 ml-11 hidden"></div>
+                <div class="flex justify-end mt-2">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Post Comment
+                    </button>
                 </div>
             </div>
+        </form>
+    </div>
+</div>
         </div>
     </div>
 
     @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        <script src="{{ asset('js/word-counter.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        function updateButtonState(button, isReacted) {
-            const type = button.dataset.type;
-            const icon = button.querySelector('svg');
-            
-            if (isReacted) {
-                icon.style.color = type === 'upvote' ? "blue" : "red";
-            } else {
-                icon.style.color = "gray";
-            }
-        }
-
-        document.querySelectorAll('.react-btn').forEach(button => {
-            const type = button.dataset.type;
-            const threadId = button.dataset.thread;
-            const countSpan = button.querySelector(`.${type}-count`);
-
-            // Set initial state
-            fetch(`/threads/${threadId}/reaction-status`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                updateButtonState(button, data[type]);
-            })
-            .catch(error => console.error('Error:', error));
-
-            // Add click event listener
-            button.addEventListener('click', function() {
-                fetch(`/threads/${threadId}/react`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify({ type: type })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.counts) {
-                        document.querySelector('.upvote-count').textContent = data.counts.upvotes;
-                        document.querySelector('.heart-count').textContent = data.counts.hearts;
-
-                        // Update button states
-                        document.querySelectorAll('.react-btn').forEach(btn => {
-                            const btnType = btn.dataset.type;
-                            updateButtonState(btn, data.userReacted[btnType]);
-                        });
-
-                        // Add a subtle animation
-                        countSpan.classList.add('scale-125');
-                        setTimeout(() => countSpan.classList.remove('scale-125'), 200);
+                function updateButtonState(button, isReacted) {
+                    const type = button.dataset.type;
+                    const icon = button.querySelector('svg');
+                    
+                    if (isReacted) {
+                        icon.style.color = type === 'upvote' ? "blue" : "red";
                     } else {
-                        console.error('Unexpected response format:', data);
+                        icon.style.color = "gray";
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                }
+
+                document.querySelectorAll('.react-btn').forEach(button => {
+                    const type = button.dataset.type;
+                    const threadId = button.dataset.thread;
+                    const countSpan = button.querySelector(`.${type}-count`);
+
+                    // Set initial state
+                    fetch(`/threads/${threadId}/reaction-status`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        updateButtonState(button, data[type]);
+                    })
+                    .catch(error => console.error('Error:', error));
+
+                    // Add click event listener
+                    button.addEventListener('click', function() {
+                        fetch(`/threads/${threadId}/react`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ type: type })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.counts) {
+                                document.querySelector('.upvote-count').textContent = data.counts.upvotes;
+                                document.querySelector('.heart-count').textContent = data.counts.hearts;
+
+                                // Update button states
+                                document.querySelectorAll('.react-btn').forEach(btn => {
+                                    const btnType = btn.dataset.type;
+                                    updateButtonState(btn, data.userReacted[btnType]);
+                                });
+
+                                // Add a subtle animation
+                                countSpan.classList.add('scale-125');
+                                setTimeout(() => countSpan.classList.remove('scale-125'), 200);
+                            } else {
+                                console.error('Unexpected response format:', data);
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                    });
+                });
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const optionsMenu = document.getElementById('options-menu');
+                const dropdownMenu = document.getElementById('dropdown-menu');
+
+                if (optionsMenu && dropdownMenu) {
+                    optionsMenu.addEventListener('click', function() {
+                        dropdownMenu.classList.toggle('hidden');
+                    });
+
+                    // Close the dropdown when clicking outside
+                    document.addEventListener('click', function(event) {
+                        if (!optionsMenu.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                            dropdownMenu.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+            document.addEventListener('DOMContentLoaded', function() {
+            // Handle all dropdown menus (both thread and comment)
+            const dropdownButtons = document.querySelectorAll('[id^="options-menu-"], [id^="comment-options-menu-"]');
+            
+            dropdownButtons.forEach(button => {
+                // Extract the ID suffix (could be a thread ID or comment ID)
+                const idParts = button.id.split('-');
+                const idSuffix = idParts.pop();
+                const isComment = button.id.includes('comment');
+                
+                // Determine the correct dropdown ID
+                const dropdownId = isComment 
+                    ? `comment-dropdown-menu-${idParts.includes('index') ? 'index-' : ''}${idSuffix}`
+                    : `dropdown-menu-${idSuffix}`;
+                    
+                const dropdownMenu = document.getElementById(dropdownId);
+                
+                if (button && dropdownMenu) {
+                    button.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        
+                        // Close all other dropdowns first
+                        document.querySelectorAll('[id^="dropdown-menu-"], [id^="comment-dropdown-menu-"]').forEach(menu => {
+                            if (menu.id !== dropdownId) {
+                                menu.classList.add('hidden');
+                            }
+                        });
+                        
+                        // Toggle the current dropdown
+                        dropdownMenu.classList.toggle('hidden');
+                        
+                        // Ensure proper positioning and z-index
+                        if (!dropdownMenu.classList.contains('hidden')) {
+                            // Add these classes when showing the dropdown
+                            dropdownMenu.classList.add('z-50');
+                            
+                            // Check if dropdown would go off-screen to the right
+                            const rect = dropdownMenu.getBoundingClientRect();
+                            if (rect.right > window.innerWidth) {
+                                dropdownMenu.style.right = '0';
+                                dropdownMenu.style.left = 'auto';
+                            }
+                        }
+                    });
+                    
+                    // Close the dropdown when clicking outside
+                    document.addEventListener('click', function() {
+                        dropdownMenu.classList.add('hidden');
+                    });
+                }
             });
         });
-    });
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const optionsMenu = document.getElementById('options-menu');
-        const dropdownMenu = document.getElementById('dropdown-menu');
-
-        if (optionsMenu && dropdownMenu) {
-            optionsMenu.addEventListener('click', function() {
-                dropdownMenu.classList.toggle('hidden');
-            });
-
-            // Close the dropdown when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!optionsMenu.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                    dropdownMenu.classList.add('hidden');
-                }
-            });
-        }
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-    // Handle all dropdown menus (both thread and comment)
-    const dropdownButtons = document.querySelectorAll('[id^="options-menu-"], [id^="comment-options-menu-"]');
-    
-    dropdownButtons.forEach(button => {
-        // Extract the ID suffix (could be a thread ID or comment ID)
-        const idParts = button.id.split('-');
-        const idSuffix = idParts.pop();
-        const isComment = button.id.includes('comment');
-        
-        // Determine the correct dropdown ID
-        const dropdownId = isComment 
-            ? `comment-dropdown-menu-${idParts.includes('index') ? 'index-' : ''}${idSuffix}`
-            : `dropdown-menu-${idSuffix}`;
-            
-        const dropdownMenu = document.getElementById(dropdownId);
-        
-        if (button && dropdownMenu) {
-            button.addEventListener('click', function(event) {
-                event.stopPropagation();
-                
-                // Close all other dropdowns first
-                document.querySelectorAll('[id^="dropdown-menu-"], [id^="comment-dropdown-menu-"]').forEach(menu => {
-                    if (menu.id !== dropdownId) {
-                        menu.classList.add('hidden');
-                    }
-                });
-                
-                // Toggle the current dropdown
-                dropdownMenu.classList.toggle('hidden');
-                
-                // Ensure proper positioning and z-index
-                if (!dropdownMenu.classList.contains('hidden')) {
-                    // Add these classes when showing the dropdown
-                    dropdownMenu.classList.add('z-50');
-                    
-                    // Check if dropdown would go off-screen to the right
-                    const rect = dropdownMenu.getBoundingClientRect();
-                    if (rect.right > window.innerWidth) {
-                        dropdownMenu.style.right = '0';
-                        dropdownMenu.style.left = 'auto';
-                    }
-                }
-            });
-            
-            // Close the dropdown when clicking outside
-            document.addEventListener('click', function() {
-                dropdownMenu.classList.add('hidden');
-            });
-        }
-    });
-});
-</script>
-@endpush
+        </script>
+    @endpush
 </x-app-layout>

@@ -74,6 +74,9 @@ Route::middleware(['verified'])->group(function () {
     Route::resource('threads', ThreadController::class);
 });
 
+Route::post('/threads/check-content', [App\Http\Controllers\ThreadController::class, 'checkContent'])->name('threads.check-content');
+Route::post('/comments/check-content', [App\Http\Controllers\CommentController::class, 'checkContent'])->name('comments.check-content');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chatbot', [ChatbotController::class, 'chat']);
 });
