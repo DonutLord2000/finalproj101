@@ -17,6 +17,14 @@
 
        <x-validation-errors class="mb-4" />
 
+       <!-- Requirements Not Met Toast -->
+       <div id="requirements-toast" class="fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 scale-0 opacity-0 z-50 flex items-center">
+           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+           </svg>
+           <span>Requirements not met - please check highlighted fields</span>
+       </div>
+
        <form method="POST" action="{{ route('register') }}" id="registration-form">
            @csrf
 
@@ -25,7 +33,7 @@
                    <x-label for="first_name" value="{{ __('First Name') }}" />
                    <x-input 
                        id="first_name" 
-                       class="block mt-1 w-full" 
+                       class="block mt-1 w-full transition-all duration-200" 
                        type="text" 
                        name="first_name" 
                        :value="old('first_name')" 
@@ -43,7 +51,7 @@
                    <x-label for="last_name" value="{{ __('Last Name') }}" />
                    <x-input 
                        id="last_name" 
-                       class="block mt-1 w-full" 
+                       class="block mt-1 w-full transition-all duration-200" 
                        type="text" 
                        name="last_name" 
                        :value="old('last_name')" 
@@ -68,13 +76,13 @@
 
            <div class="mt-4">
                <x-label for="email" value="{{ __('Email') }}" />
-               <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
+               <x-input id="email" class="block mt-1 w-full transition-all duration-200" type="email" name="email" :value="old('email')" required autocomplete="username" />
            </div>
 
            <div class="mt-4">
                <x-label for="password" value="{{ __('Password') }}" />
                <div class="relative">
-                   <input id="password" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm pr-10" type="password" name="password" required autocomplete="new-password" />
+                   <input id="password" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm pr-10 transition-all duration-200" type="password" name="password" required autocomplete="new-password" oninput="checkPasswordStrength(); checkPasswordMatch();" />
                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePassword('password', 'eye-icon-password')">
                        <svg id="eye-icon-password" class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -82,18 +90,63 @@
                        </svg>
                    </span>
                </div>
+               
+               <!-- Password Strength Indicators -->
+               <div class="mt-2 space-y-1">
+                   <div class="text-sm font-medium text-gray-700 mb-2">Password Requirements:</div>
+                   <div id="length-check" class="flex items-center text-sm text-red-500 transition-all duration-200">
+                       <span class="w-4 h-4 mr-2 rounded-full border-2 border-red-500 flex items-center justify-center transition-all duration-200">
+                           <span class="w-2 h-2 rounded-full bg-red-500 hidden transition-all duration-200"></span>
+                       </span>
+                       At least 8 characters
+                   </div>
+                   <div id="uppercase-check" class="flex items-center text-sm text-red-500 transition-all duration-200">
+                       <span class="w-4 h-4 mr-2 rounded-full border-2 border-red-500 flex items-center justify-center transition-all duration-200">
+                           <span class="w-2 h-2 rounded-full bg-red-500 hidden transition-all duration-200"></span>
+                       </span>
+                       At least one uppercase letter (A-Z)
+                   </div>
+                   <div id="lowercase-check" class="flex items-center text-sm text-red-500 transition-all duration-200">
+                       <span class="w-4 h-4 mr-2 rounded-full border-2 border-red-500 flex items-center justify-center transition-all duration-200">
+                           <span class="w-2 h-2 rounded-full bg-red-500 hidden transition-all duration-200"></span>
+                       </span>
+                       At least one lowercase letter (a-z)
+                   </div>
+                   <div id="number-check" class="flex items-center text-sm text-red-500 transition-all duration-200">
+                       <span class="w-4 h-4 mr-2 rounded-full border-2 border-red-500 flex items-center justify-center transition-all duration-200">
+                           <span class="w-2 h-2 rounded-full bg-red-500 hidden transition-all duration-200"></span>
+                       </span>
+                       At least one number (0-9)
+                   </div>
+                   <div id="special-check" class="flex items-center text-sm text-red-500 transition-all duration-200">
+                       <span class="w-4 h-4 mr-2 rounded-full border-2 border-red-500 flex items-center justify-center transition-all duration-200">
+                           <span class="w-2 h-2 rounded-full bg-red-500 hidden transition-all duration-200"></span>
+                       </span>
+                       At least one special character (@, #, $, %, etc.)
+                   </div>
+               </div>
            </div>
 
            <div class="mt-4">
                <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
                <div class="relative">
-                   <input id="password_confirmation" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm pr-10" type="password" name="password_confirmation" required autocomplete="new-password" />
+                   <input id="password_confirmation" class="block mt-1 w-full border-gray-300 rounded-lg shadow-sm pr-10 transition-all duration-200" type="password" name="password_confirmation" required autocomplete="new-password" oninput="checkPasswordMatch();" />
                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onclick="togglePassword('password_confirmation', 'eye-icon-confirm-password')">
                        <svg id="eye-icon-confirm-password" class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.27.842-.678 1.633-1.21 2.344M15.73 15.73a9 9 0 01-9.458 0"></path>
                        </svg>
                    </span>
+               </div>
+               
+               <!-- Password Match Notification -->
+               <div id="password-match-notification" class="mt-2 text-sm hidden">
+                   <div id="password-match-success" class="text-green-600 hidden transition-all duration-200">
+                       ✓ Passwords match
+                   </div>
+                   <div id="password-match-error" class="text-red-600 hidden transition-all duration-200">
+                       ✗ Passwords do not match
+                   </div>
                </div>
            </div>
 
@@ -110,6 +163,265 @@
                        passwordField.type = "password";
                        eyeIcon.classList.add("text-gray-500");
                        eyeIcon.classList.remove("text-gray-700");
+                   }
+               }
+
+               // Function to show requirements toast
+               function showRequirementsToast() {
+                   const toast = document.getElementById('requirements-toast');
+                   
+                   // Show the toast
+                   toast.classList.remove('scale-0', 'opacity-0');
+                   toast.classList.add('scale-100', 'opacity-100');
+                   
+                   // Hide after 4 seconds
+                   setTimeout(() => {
+                       toast.classList.remove('scale-100', 'opacity-100');
+                       toast.classList.add('scale-0', 'opacity-0');
+                   }, 4000);
+               }
+
+               // Function to trigger blinking animation
+               function triggerBlink(element) {
+                   element.classList.add('blink-red');
+                   setTimeout(() => {
+                       element.classList.remove('blink-red');
+                   }, 1000);
+               }
+
+               // Function to trigger field border blinking
+               function triggerFieldBlink(fieldId) {
+                   const field = document.getElementById(fieldId);
+                   field.classList.add('blink-border-red');
+                   setTimeout(() => {
+                       field.classList.remove('blink-border-red');
+                   }, 1000);
+               }
+
+               // Function to highlight all unmet requirements when register is clicked
+               function highlightUnmetRequirements() {
+                   const firstNameInput = document.getElementById('first_name');
+                   const lastNameInput = document.getElementById('last_name');
+                   const emailInput = document.getElementById('email');
+                   const passwordInput = document.getElementById('password');
+                   const passwordConfirmInput = document.getElementById('password_confirmation');
+
+                   // Check and highlight empty required fields
+                   if (!firstNameInput.value.trim()) {
+                       triggerFieldBlink('first_name');
+                   }
+                   if (!lastNameInput.value.trim()) {
+                       triggerFieldBlink('last_name');
+                   }
+                   if (!emailInput.value.trim()) {
+                       triggerFieldBlink('email');
+                   }
+                   if (!passwordInput.value.trim()) {
+                       triggerFieldBlink('password');
+                   }
+                   if (!passwordConfirmInput.value.trim()) {
+                       triggerFieldBlink('password_confirmation');
+                   }
+
+                   // Check and highlight password requirements
+                   const password = passwordInput.value;
+                   if (password.length > 0) {
+                       if (password.length < 8) {
+                           triggerBlink(document.getElementById('length-check'));
+                       }
+                       if (!/[A-Z]/.test(password)) {
+                           triggerBlink(document.getElementById('uppercase-check'));
+                       }
+                       if (!/[a-z]/.test(password)) {
+                           triggerBlink(document.getElementById('lowercase-check'));
+                       }
+                       if (!/[0-9]/.test(password)) {
+                           triggerBlink(document.getElementById('number-check'));
+                       }
+                       if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+                           triggerBlink(document.getElementById('special-check'));
+                       }
+                   }
+
+                   // Check password match
+                   if (passwordInput.value !== passwordConfirmInput.value && passwordConfirmInput.value.length > 0) {
+                       triggerFieldBlink('password_confirmation');
+                       triggerBlink(document.getElementById('password-match-error'));
+                   }
+
+                   // Check email format
+                   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                   if (emailInput.value.length > 0 && !emailRegex.test(emailInput.value)) {
+                       triggerFieldBlink('email');
+                   }
+
+                   // Check name format
+                   const nameRegex = /^[A-Za-z\s\-]+$/;
+                   if (firstNameInput.value.length > 0 && !nameRegex.test(firstNameInput.value)) {
+                       triggerFieldBlink('first_name');
+                   }
+                   if (lastNameInput.value.length > 0 && !nameRegex.test(lastNameInput.value)) {
+                       triggerFieldBlink('last_name');
+                   }
+               }
+
+               // Password strength checking function
+               function checkPasswordStrength() {
+                   const password = document.getElementById('password').value;
+                   let hasUnmetRequirements = false;
+                   
+                   // Check minimum length (8 characters)
+                   const lengthCheck = document.getElementById('length-check');
+                   const lengthIndicator = lengthCheck.querySelector('span span');
+                   if (password.length >= 8) {
+                       lengthCheck.classList.remove('text-red-500', 'blink-red');
+                       lengthCheck.classList.add('text-green-600');
+                       lengthCheck.querySelector('span').classList.remove('border-red-500');
+                       lengthCheck.querySelector('span').classList.add('border-green-600');
+                       lengthIndicator.classList.remove('hidden', 'bg-red-500');
+                       lengthIndicator.classList.add('bg-green-600');
+                   } else {
+                       lengthCheck.classList.remove('text-green-600');
+                       lengthCheck.classList.add('text-red-500');
+                       lengthCheck.querySelector('span').classList.remove('border-green-600');
+                       lengthCheck.querySelector('span').classList.add('border-red-500');
+                       lengthIndicator.classList.add('hidden');
+                       lengthIndicator.classList.remove('bg-green-600');
+                       lengthIndicator.classList.add('bg-red-500');
+                       if (password.length > 0) {
+                           triggerBlink(lengthCheck);
+                           hasUnmetRequirements = true;
+                       }
+                   }
+
+                   // Check uppercase letters
+                   const uppercaseCheck = document.getElementById('uppercase-check');
+                   const uppercaseIndicator = uppercaseCheck.querySelector('span span');
+                   if (/[A-Z]/.test(password)) {
+                       uppercaseCheck.classList.remove('text-red-500', 'blink-red');
+                       uppercaseCheck.classList.add('text-green-600');
+                       uppercaseCheck.querySelector('span').classList.remove('border-red-500');
+                       uppercaseCheck.querySelector('span').classList.add('border-green-600');
+                       uppercaseIndicator.classList.remove('hidden', 'bg-red-500');
+                       uppercaseIndicator.classList.add('bg-green-600');
+                   } else {
+                       uppercaseCheck.classList.remove('text-green-600');
+                       uppercaseCheck.classList.add('text-red-500');
+                       uppercaseCheck.querySelector('span').classList.remove('border-green-600');
+                       uppercaseCheck.querySelector('span').classList.add('border-red-500');
+                       uppercaseIndicator.classList.add('hidden');
+                       uppercaseIndicator.classList.remove('bg-green-600');
+                       uppercaseIndicator.classList.add('bg-red-500');
+                       if (password.length > 0) {
+                           triggerBlink(uppercaseCheck);
+                           hasUnmetRequirements = true;
+                       }
+                   }
+
+                   // Check lowercase letters
+                   const lowercaseCheck = document.getElementById('lowercase-check');
+                   const lowercaseIndicator = lowercaseCheck.querySelector('span span');
+                   if (/[a-z]/.test(password)) {
+                       lowercaseCheck.classList.remove('text-red-500', 'blink-red');
+                       lowercaseCheck.classList.add('text-green-600');
+                       lowercaseCheck.querySelector('span').classList.remove('border-red-500');
+                       lowercaseCheck.querySelector('span').classList.add('border-green-600');
+                       lowercaseIndicator.classList.remove('hidden', 'bg-red-500');
+                       lowercaseIndicator.classList.add('bg-green-600');
+                   } else {
+                       lowercaseCheck.classList.remove('text-green-600');
+                       lowercaseCheck.classList.add('text-red-500');
+                       lowercaseCheck.querySelector('span').classList.remove('border-green-600');
+                       lowercaseCheck.querySelector('span').classList.add('border-red-500');
+                       lowercaseIndicator.classList.add('hidden');
+                       lowercaseIndicator.classList.remove('bg-green-600');
+                       lowercaseIndicator.classList.add('bg-red-500');
+                       if (password.length > 0) {
+                           triggerBlink(lowercaseCheck);
+                           hasUnmetRequirements = true;
+                       }
+                   }
+
+                   // Check numbers
+                   const numberCheck = document.getElementById('number-check');
+                   const numberIndicator = numberCheck.querySelector('span span');
+                   if (/[0-9]/.test(password)) {
+                       numberCheck.classList.remove('text-red-500', 'blink-red');
+                       numberCheck.classList.add('text-green-600');
+                       numberCheck.querySelector('span').classList.remove('border-red-500');
+                       numberCheck.querySelector('span').classList.add('border-green-600');
+                       numberIndicator.classList.remove('hidden', 'bg-red-500');
+                       numberIndicator.classList.add('bg-green-600');
+                   } else {
+                       numberCheck.classList.remove('text-green-600');
+                       numberCheck.classList.add('text-red-500');
+                       numberCheck.querySelector('span').classList.remove('border-green-600');
+                       numberCheck.querySelector('span').classList.add('border-red-500');
+                       numberIndicator.classList.add('hidden');
+                       numberIndicator.classList.remove('bg-green-600');
+                       numberIndicator.classList.add('bg-red-500');
+                       if (password.length > 0) {
+                           triggerBlink(numberCheck);
+                           hasUnmetRequirements = true;
+                       }
+                   }
+
+                   // Check special characters
+                   const specialCheck = document.getElementById('special-check');
+                   const specialIndicator = specialCheck.querySelector('span span');
+                   if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+                       specialCheck.classList.remove('text-red-500', 'blink-red');
+                       specialCheck.classList.add('text-green-600');
+                       specialCheck.querySelector('span').classList.remove('border-red-500');
+                       specialCheck.querySelector('span').classList.add('border-green-600');
+                       specialIndicator.classList.remove('hidden', 'bg-red-500');
+                       specialIndicator.classList.add('bg-green-600');
+                   } else {
+                       specialCheck.classList.remove('text-green-600');
+                       specialCheck.classList.add('text-red-500');
+                       specialCheck.querySelector('span').classList.remove('border-green-600');
+                       specialCheck.querySelector('span').classList.add('border-red-500');
+                       specialIndicator.classList.add('hidden');
+                       specialIndicator.classList.remove('bg-green-600');
+                       specialIndicator.classList.add('bg-red-500');
+                       if (password.length > 0) {
+                           triggerBlink(specialCheck);
+                           hasUnmetRequirements = true;
+                       }
+                   }
+
+                   // Trigger password field blink if there are unmet requirements
+                   if (hasUnmetRequirements && password.length > 0) {
+                       triggerFieldBlink('password');
+                   }
+               }
+
+               // Password match checking function
+               function checkPasswordMatch() {
+                   const password = document.getElementById('password').value;
+                   const confirmPassword = document.getElementById('password_confirmation').value;
+                   const notification = document.getElementById('password-match-notification');
+                   const successMsg = document.getElementById('password-match-success');
+                   const errorMsg = document.getElementById('password-match-error');
+
+                   // Only show notification if confirm password field has content
+                   if (confirmPassword.length > 0) {
+                       notification.classList.remove('hidden');
+                       
+                       if (password === confirmPassword) {
+                           successMsg.classList.remove('hidden');
+                           errorMsg.classList.add('hidden');
+                           // Remove any blinking from confirm password field
+                           document.getElementById('password_confirmation').classList.remove('blink-border-red');
+                       } else {
+                           successMsg.classList.add('hidden');
+                           errorMsg.classList.remove('hidden');
+                           // Trigger blinking for both the error message and confirm password field
+                           triggerBlink(errorMsg);
+                           triggerFieldBlink('password_confirmation');
+                       }
+                   } else {
+                       notification.classList.add('hidden');
                    }
                }
 
@@ -230,8 +542,9 @@
                        if (validateForm()) {
                            eulaModal.classList.remove('hidden');
                        } else {
-                           // Alert the user to fill all fields
-                           alert('Please fill in all required fields correctly before proceeding.');
+                           // Show toast and highlight unmet requirements instead of alert
+                           showRequirementsToast();
+                           highlightUnmetRequirements();
                        }
                    });
 
@@ -245,6 +558,16 @@
                        
                        // Check if passwords match
                        if (passwordInput.value !== passwordConfirmInput.value) {
+                           return false;
+                       }
+                       
+                       // Check password strength requirements
+                       const password = passwordInput.value;
+                       if (password.length < 8 || 
+                           !/[A-Z]/.test(password) || 
+                           !/[a-z]/.test(password) || 
+                           !/[0-9]/.test(password) || 
+                           !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
                            return false;
                        }
                        
@@ -293,6 +616,10 @@
                    position: absolute;
                }
 
+               .fixed {
+                   position: fixed;
+               }
+
                .inset-y-0 {
                    top: 50%;
                    transform: translateY(-50%);
@@ -306,8 +633,26 @@
                    bottom: -2.5rem;
                }
 
+               .top-4 {
+                   top: 1rem;
+               }
+
+               .right-4 {
+                   right: 1rem;
+               }
+
                .pr-3 {
                    padding-right: 0.75rem;
+               }
+
+               .px-6 {
+                   padding-left: 1.5rem;
+                   padding-right: 1.5rem;
+               }
+
+               .py-3 {
+                   padding-top: 0.75rem;
+                   padding-bottom: 0.75rem;
                }
 
                .transform {
@@ -321,6 +666,10 @@
 
                .duration-300 {
                    transition-duration: 300ms;
+               }
+
+               .duration-200 {
+                   transition-duration: 200ms;
                }
 
                .scale-0 {
@@ -337,6 +686,82 @@
 
                .opacity-100 {
                    opacity: 1;
+               }
+
+               .z-50 {
+                   z-index: 50;
+               }
+
+               /* Blinking animations */
+               @keyframes blinkRed {
+                   0%, 50%, 100% { 
+                       color: #dc2626; 
+                   }
+                   25%, 75% { 
+                       color: #ef4444; 
+                       text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+                   }
+               }
+
+               @keyframes blinkBorderRed {
+                   0%, 50%, 100% { 
+                       border-color: #dc2626; 
+                       box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+                   }
+                   25%, 75% { 
+                       border-color: #ef4444; 
+                       box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+                   }
+               }
+
+               .blink-red {
+                   animation: blinkRed 1s ease-in-out;
+               }
+
+               .blink-border-red {
+                   animation: blinkBorderRed 1s ease-in-out;
+               }
+
+               /* Enhanced transitions for smoother effects */
+               input[type="password"], input[type="text"], input[type="email"] {
+                   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+               }
+
+               .text-red-500, .text-green-600 {
+                   transition: color 0.2s ease-in-out, text-shadow 0.2s ease-in-out;
+               }
+
+               /* Toast styling */
+               .bg-red-600 {
+                   background-color: #dc2626;
+               }
+
+               .rounded-lg {
+                   border-radius: 0.5rem;
+               }
+
+               .shadow-lg {
+                   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+               }
+
+               .flex {
+                   display: flex;
+               }
+
+               .items-center {
+                   align-items: center;
+               }
+
+               .w-5 {
+                   width: 1.25rem;
+               }
+
+               .h-5 {
+                   height: 1.25rem;
+               }
+
+               .mr-2 {
+                   margin-right: 0.5rem;
                }
            </style>
 
