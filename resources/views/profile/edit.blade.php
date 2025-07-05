@@ -735,7 +735,7 @@
                     function updatePredictButtonState() {
                         const canPredict = userHasExperience && userHasEducation;
                         
-                        predictButton.disabled = !canPredict;
+                  
                         predictButton.title = canPredict ? "Click to get your career prediction and insights" : "Please add at least one experience and one education entry to enable prediction.";
                     }
 
