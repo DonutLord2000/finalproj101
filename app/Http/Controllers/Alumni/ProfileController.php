@@ -230,7 +230,7 @@ class ProfileController extends Controller
             'bar_chart' => $barChartData,
         ];
 
-        // 4. Prepare prompt for OpenAI (without chart data generation instructions)
+        // 4. Prepare prompt for OpenAI (including formatted chart data for analysis)
         $userExperience = $user->experiences->map(function($exp) {
             return "Title: {$exp->title}, Company: {$exp->company}, Type: {$exp->employment_type}, Dates: {$exp->start_date->format('Y')} - " . ($exp->current_role ? 'Present' : ($exp->end_date ? $exp->end_date->format('Y') : 'Unknown'));
         })->implode('; ');
@@ -243,10 +243,19 @@ class ProfileController extends Controller
             return "Degree: {$alumni->degree_program}, Major: {$alumni->major}, Graduated: {$alumni->year_graduated}, Job: {$alumni->job_title}, Industry: {$alumni->industry}";
         })->implode('; ');
 
+        // Format chart data for AI prompt
+        $formattedPieChartData = collect($pieChartData)->map(function($item) {
+            return "{$item['label']}: {$item['value']} alumni";
+        })->implode("\n- ");
+
+        $formattedBarChartData = collect($barChartData)->map(function($item) {
+            return "{$item['label']}: {$item['value']} alumni";
+        })->implode("\n- ");
+
         $prompt = "Based on the user's current profile (experience and education) and the provided alumni data, provide both personal insights and a career path prediction.
 
         **Personal Insights:**
-        Gently describe the user's strengths, potential career directions, and how their background might be valuable. Keep it concise and positive.
+        Analyze the user's strengths and potential career directions by comparing their background (experience and education) with the trends observed in the alumni data. Specifically, reference the provided alumni industry and job title distributions to suggest how the user's profile aligns with or could leverage these trends. Highlight areas of potential growth or common career paths for individuals with similar profiles within the alumni network. Keep it concise and positive.
 
         **Career Path Prediction:**
         Provide the career path as a bulleted list, with each bullet point describing a potential stage or role at specific timeframes (e.g., 'After 2 years:', 'After 5 years:', 'After 10 years:'). Make sure to always include at least three distinct timeframes and career stages.
@@ -258,11 +267,16 @@ class ProfileController extends Controller
         **Alumni Data ({$yearFilter} years):**
         {$alumniInfo}
 
+        **Alumni Industry Distribution:**
+        - {$formattedPieChartData}
+
+        **Alumni Job Title Distribution:**
+        - {$formattedBarChartData}
+
         Format your entire response as a JSON object with two keys: 'insight' (string) and 'prediction' (string, containing the bulleted career path).
-        
         Example JSON structure:
         {
-            \"insight\": \"Your diverse experience in X and strong educational background in Y suggest a strong foundation for roles in Z.\",
+            \"insight\": \"Your diverse experience in X and strong educational background in Y suggest a strong foundation for roles in Z. Looking at the alumni data, the 'Software Industry' is prominent, which aligns well with your [mention specific user experience/education]. Many alumni with similar backgrounds have pursued roles like 'Software Engineer'.\",
             \"prediction\": \"- After 2 years: [Role suggestion]\\n- After 5 years: [Role suggestion]\\n- After 10 years: [Role suggestion]\"
         }";
 
@@ -274,7 +288,7 @@ class ProfileController extends Controller
             ])->post('https://api.openai.com/v1/chat/completions', [
                 'model' => 'gpt-4o-mini', // Using gpt-4o-mini as it's cost-effective and often sufficient
                 'messages' => [
-                    ['role' => 'system', 'content' => 'You are a career prediction and insights AI. Provide personal insights and career path predictions based on user and alumni data. Ensure the output is a valid JSON object. The career path should be a bulleted list with timeframes.'],
+                    ['role' => 'system', 'content' => 'You are a career prediction and insights AI. Provide personal insights and career path predictions based on user and alumni data. Ensure the output is a valid JSON object. The career path should be a bulleted list with timeframes. Your insights should compare the user\'s profile to the alumni data and reference the provided industry and job title distributions.'],
                     ['role' => 'user', 'content' => $prompt],
                 ],
                 'temperature' => 0.7,
