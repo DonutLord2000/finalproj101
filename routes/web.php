@@ -121,6 +121,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/education', [ProfileController::class, 'addEducation'])->name('education.add');
     Route::delete('/profile/experience/{id}', [ProfileController::class, 'destroyExperience'])->name('profile.destroyExperience');
     Route::delete('/profile/education/{id}', [ProfileController::class, 'destroyEducation'])->name('profile.destroyEducation');
+    Route::post('/profile/predict-career', [ProfileController::class, 'predictCareer'])->name('profile.predictCareer');
+    Route::post('/profile/personal-insights', [ProfileController::class, 'getPersonalInsights'])->name('profile.getPersonalInsights');
 
     Route::post('/verification-request', [VerificationController::class, 'store'])->name('verification.request');
     Route::delete('/verification/{verificationRequest}/cancel', [VerificationController::class, 'cancel'])->name('verification.cancel');

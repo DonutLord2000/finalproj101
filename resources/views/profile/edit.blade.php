@@ -232,6 +232,56 @@
                 </div>
             </div>
 
+            <!-- Career Path Prediction Section -->
+            <div class="mt-6 bg-white shadow rounded-lg">
+                <div class="p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Career Path Prediction & Insights</h2>
+
+                    <div class="flex flex-col items-center justify-center gap-4 mb-4">
+                        <button id="predict-button" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+                            Get Prediction & Insights
+                        </button>
+                        <div class="w-full sm:w-1/2 md:w-1/3">
+                            <label for="prediction_year_select" class="sr-only">Compare with alumni from:</label>
+                            <select id="prediction_year_select" name="prediction_year" class="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                <option value="all" selected>All Graduates</option>
+                                @foreach($alumniYears as $year)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="prediction-loading" class="mt-6 hidden flex items-center justify-center text-blue-600 font-medium text-lg">
+                        <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating your personalized career path and insights...
+                    </div>
+
+                    <div id="prediction-results" class="mt-6 p-6 bg-gray-50 rounded-lg shadow-inner hidden">
+                        <h3 class="font-semibold text-lg mb-2 text-gray-900">Your Personal Insights:</h3>
+                        <p id="insights-text" class="text-gray-800 leading-relaxed mb-6 whitespace-pre-wrap"></p>
+
+                        <h3 class="font-semibold text-xl mb-4 text-gray-900">Your Predicted Career Path:</h3>
+                        <p id="prediction-text" class="text-gray-800 leading-relaxed mb-6 whitespace-pre-wrap"></p>
+
+                        <div id="chart-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="h-64"> {{-- Adjusted height for smaller charts --}}
+                                <h4 class="font-semibold text-lg mb-3 text-gray-800">Alumni Industry Distribution</h4>
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                            <div class="h-64"> {{-- Adjusted height for smaller charts --}}
+                                <h4 class="font-semibold text-lg mb-3 text-gray-800">Alumni Job Title Trends</h4>
+                                <canvas id="barChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="prediction-error" class="mt-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg hidden" role="alert"></div>
+                </div>
+            </div>
+
             <!-- Experience Section -->
             <div class="mt-6 bg-white shadow rounded-lg">
                 <div class="p-6">
@@ -325,7 +375,7 @@
                                         </p>
                                         <p class="text-sm text-gray-500">
                                             {{ $experience->start_date->format('M Y') }} - 
-                                            {{ $experience->current_role ? 'Present' : $experience->end_date->format('M Y') }}
+                                            {{ $experience->current_role ? 'Present' : ($experience->end_date ? $experience->end_date->format('M Y') : 'Present') }}
                                         </p>
                                         @if($experience->description)
                                             <p class="mt-2 text-gray-600">{{ $experience->description }}</p>
@@ -539,7 +589,7 @@
                                         </div>
                                         <button @click="isCommentsOpen = !isCommentsOpen" class="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors duration-200">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                             </svg>
                                             <span>{{ $thread->comments_count }} comments</span>
                                         </button>
@@ -596,6 +646,7 @@
             </div>
 
             @push('scripts')
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> {{-- Chart.js for graphics --}}
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -664,6 +715,254 @@
                             dropdownMenu.classList.add('hidden');
                         });
                     });
+
+                    // --- Career Prediction Script ---
+                    const predictionYearSelect = document.getElementById('prediction_year_select');
+                    const predictButton = document.getElementById('predict-button');
+                    const predictionLoading = document.getElementById('prediction-loading');
+                    const predictionResults = document.getElementById('prediction-results');
+                    const predictionText = document.getElementById('prediction-text');
+                    const insightsText = document.getElementById('insights-text'); // Element for insights
+                    const predictionError = document.getElementById('prediction-error');
+
+                    let pieChartInstance = null;
+                    let barChartInstance = null;
+
+                    // Check initial user data to enable/disable buttons
+                    const userHasExperience = {{ $user->experiences->isNotEmpty() ? 'true' : 'false' }};
+                    const userHasEducation = {{ $user->education->isNotEmpty() ? 'true' : 'false' }};
+
+                    function updatePredictButtonState() {
+                        const canPredict = userHasExperience && userHasEducation;
+                        
+                        predictButton.disabled = !canPredict;
+                        predictButton.title = canPredict ? "Click to get your career prediction and insights" : "Please add at least one experience and one education entry to enable prediction.";
+                    }
+
+                    updatePredictButtonState(); // Set initial state on page load
+
+                    // Handle predict button click
+                    predictButton.addEventListener('click', async function() {
+                        predictionResults.classList.add('hidden');
+                        predictionError.classList.add('hidden');
+                        predictionLoading.classList.remove('hidden');
+                        predictButton.disabled = true; // Disable button during prediction
+
+                        const selectedYearValue = predictionYearSelect.value;
+                        let yearFilter = 'all';
+                        let specificYear = null;
+
+                        if (selectedYearValue !== 'all') {
+                            yearFilter = 'specific';
+                            specificYear = selectedYearValue;
+                        }
+
+                        try {
+                            const response = await fetch('{{ route('profile.predictCareer') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    year_filter: yearFilter,
+                                    specific_year: specificYear
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (!response.ok) {
+                                displayPredictionError(data.error || 'An unexpected error occurred during prediction.');
+                                return;
+                            }
+
+                            insightsText.textContent = data.insight; // Display insights
+                            predictionText.textContent = data.prediction; // Display career path
+                            predictionResults.classList.remove('hidden');
+
+                            // Render charts if data is available
+                            renderCharts(data.chart_data);
+
+                        } catch (error) {
+                            console.error('Prediction fetch error:', error);
+                            displayPredictionError('Failed to get prediction. Please check your internet connection and try again.');
+                        } finally {
+                            predictionLoading.classList.add('hidden');
+                            updatePredictButtonState(); // Re-enable button based on data availability
+                        }
+                    });
+
+                    function displayPredictionError(message) {
+                        predictionError.innerHTML = `<p class="font-bold">Prediction Error:</p><p>${message}</p>`;
+                        predictionError.classList.remove('hidden');
+                        predictionLoading.classList.add('hidden');
+                        updatePredictButtonState();
+                    }
+
+                    function renderCharts(chartData) {
+                        // Destroy existing charts if they exist to prevent duplicates
+                        if (pieChartInstance) {
+                            pieChartInstance.destroy();
+                        }
+                        if (barChartInstance) {
+                            barChartInstance.destroy();
+                        }
+
+                        const pieCtx = document.getElementById('pieChart').getContext('2d');
+                        const barCtx = document.getElementById('barChart').getContext('2d');
+
+                        // Generate a consistent set of colors for charts
+                        const chartColors = [
+                            '#4299E1', '#667EEA', '#9F7AEA', '#D53F8C', '#ED8936',
+                            '#48BB78', '#F6E05E', '#ECC94B', '#F6AD55', '#ED8936',
+                            '#A0AEC0', '#CBD5E0', '#E2E8F0', '#EDF2F7', '#F7FAFC'
+                        ];
+
+                        // Pie Chart (Industry Distribution)
+                        if (chartData && chartData.pie_chart && chartData.pie_chart.length > 0) {
+                            pieChartInstance = new Chart(pieCtx, {
+                                type: 'pie',
+                                data: {
+                                    labels: chartData.pie_chart.map(item => item.label),
+                                    datasets: [{
+                                        data: chartData.pie_chart.map(item => item.value),
+                                        backgroundColor: chartColors.slice(0, chartData.pie_chart.length),
+                                        hoverOffset: 4
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false, // Allow custom height
+                                    plugins: {
+                                        legend: {
+                                            position: 'right', // Position legend to the right for better readability
+                                            labels: {
+                                                boxWidth: 15, // Smaller color boxes
+                                                padding: 10 // Less padding between items
+                                            }
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    let label = context.label || '';
+                                                    if (label) {
+                                                        label += ': ';
+                                                    }
+                                                    if (context.parsed !== null) {
+                                                        label += context.parsed + '%'; // Assuming values are percentages or counts
+                                                    }
+                                                    return label;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            pieCtx.clearRect(0, 0, pieCtx.canvas.width, pieCtx.canvas.height);
+                            pieCtx.font = '16px Arial';
+                            pieCtx.textAlign = 'center';
+                            pieCtx.fillStyle = '#6B7280'; // gray-500
+                            pieCtx.fillText('No data for industry distribution.', pieCtx.canvas.width / 2, pieCtx.canvas.height / 2);
+                        }
+
+                        // Bar Chart (Job Title Trends)
+                        if (chartData && chartData.bar_chart && chartData.bar_chart.length > 0) {
+                            barChartInstance = new Chart(barCtx, {
+                                type: 'bar',
+                                data: {
+                                    labels: chartData.bar_chart.map(item => item.label),
+                                    datasets: [{
+                                        label: 'Number of Alumni',
+                                        data: chartData.bar_chart.map(item => item.value),
+                                        backgroundColor: chartColors[0], // Use a single color for bars
+                                        borderColor: chartColors[0],
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false, // Allow custom height
+                                    plugins: {
+                                        legend: {
+                                            display: false,
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    let label = context.dataset.label || '';
+                                                    if (label) {
+                                                        label += ': ';
+                                                    }
+                                                    label += context.parsed.y;
+                                                    return label;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Count of Alumni'
+                                            },
+                                            ticks: {
+                                                precision: 0 // Ensure integer ticks for counts
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Job Title'
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } else {
+                            barCtx.clearRect(0, 0, barCtx.canvas.width, barCtx.canvas.height);
+                            barCtx.font = '16px Arial';
+                            barCtx.textAlign = 'center';
+                            barCtx.fillStyle = '#6B7280'; // gray-500
+                            barCtx.fillText('No data for job title trends.', barCtx.canvas.width / 2, barCtx.canvas.height / 2);
+                        }
+                    }
+                });
+            </script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.getElementById('current_role').addEventListener('change', function() {
+                        const endDateInput = document.getElementById('end_date');
+                        if (this.checked) {
+                            endDateInput.disabled = true;
+                            endDateInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+                            endDateInput.value = '';
+                            this.value = '1'; // Set to '1' when checked
+                        } else {
+                            endDateInput.disabled = false;
+                            endDateInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                            this.value = '0'; // Set to '0' when unchecked
+                        }
+                    });
+
+                    document.querySelector('input[name="documents[]"]')?.addEventListener('change', function(e) {
+                        const fileList = document.getElementById('selected-files');
+                        fileList.innerHTML = '';
+                        
+                        Array.from(this.files).forEach(file => {
+                            const fileItem = document.createElement('div');
+                            fileItem.className = 'flex items-center text-sm text-gray-600';
+                            fileItem.innerHTML = `
+                                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                ${file.name}
+                            `;
+                            fileList.appendChild(fileItem);
+                        });
+                    });
                 });
             </script>
             @endpush
@@ -674,45 +973,14 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
     <script>
-        document.getElementById('current_role').addEventListener('change', function() {
-            const endDateInput = document.getElementById('end_date');
-            if (this.checked) {
-                endDateInput.disabled = true;
-                endDateInput.classList.add('bg-gray-200', 'cursor-not-allowed');
-                endDateInput.value = '';
-                this.value = '1'; // Set to '1' when checked
-            } else {
-                endDateInput.disabled = false;
-                endDateInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
-                this.value = '0'; // Set to '0' when unchecked
-            }
-        });
-
-        document.querySelector('input[name="documents[]"]')?.addEventListener('change', function(e) {
-            const fileList = document.getElementById('selected-files');
-            fileList.innerHTML = '';
-            
-            Array.from(this.files).forEach(file => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'flex items-center text-sm text-gray-600';
-                fileItem.innerHTML = `
-                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    ${file.name}
-                `;
-                fileList.appendChild(fileItem);
-            });
-        });
     @if(!$user->profile?->is_verified)
         @if(!$user->profile?->address)
-            <button type="button" onclick="document.getElementById('edit-form').classList.remove('hidden'); document.getElementById('address').focus();" class="text-blue-600 text-sm hover:underline">
-                Add location to verify
-            </button>
+            // This script block seems to be duplicated or misplaced.
+            // It's better to handle this logic directly in the Blade template or a single JS block.
+            // Keeping it for now as it was in the original file, but noting it.
+            // The button for "Add location to verify" is already handled in the HTML above.
         @else
-            <button type="button" onclick="document.getElementById('verification-form').classList.toggle('hidden')" class="text-blue-600 text-sm hover:underline">
-                Verify that you're an alumni
-            </button>
+            // The button for "Verify that you're an alumni" is already handled in the HTML above.
         @endif
     @endif
     </script>
