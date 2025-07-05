@@ -78,7 +78,7 @@ class ProfileController extends Controller
     private function getS3Url($path)
     {
         if (!$path) return null;
-        return Storage::disk('s3')->url($path);
+        return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(5));
     }
 
     // Update the update method to store the full path
@@ -180,7 +180,7 @@ class ProfileController extends Controller
         $education = auth()->user()->education()->findOrFail($id);
         $education->delete();
 
-        return redirect()->route('profile.edit')->with('success', 'Education deleted successfully');
+        return redirect()->route('profile.edit')->with('success', 'Education added successfully');
     }
 
     /**
@@ -214,7 +214,23 @@ class ProfileController extends Controller
             return response()->json(['error' => 'No alumni data found for the selected criteria. Please try a different year or "all years".'], 404);
         }
 
-        // 3. Prepare prompt for OpenAI
+        // 3. Prepare chart data from alumniData (server-side aggregation)
+        $industryCounts = $alumniData->groupBy('industry')->map->count();
+        $pieChartData = $industryCounts->map(function ($count, $industry) {
+            return ['label' => $industry, 'value' => $count];
+        })->values()->toArray();
+
+        $jobTitleCounts = $alumniData->groupBy('job_title')->map->count();
+        $barChartData = $jobTitleCounts->map(function ($count, $jobTitle) {
+            return ['label' => $jobTitle, 'value' => $count];
+        })->values()->toArray();
+
+        $chartData = [
+            'pie_chart' => $pieChartData,
+            'bar_chart' => $barChartData,
+        ];
+
+        // 4. Prepare prompt for OpenAI (without chart data generation instructions)
         $userExperience = $user->experiences->map(function($exp) {
             return "Title: {$exp->title}, Company: {$exp->company}, Type: {$exp->employment_type}, Dates: {$exp->start_date->format('Y')} - " . ($exp->current_role ? 'Present' : ($exp->end_date ? $exp->end_date->format('Y') : 'Unknown'));
         })->implode('; ');
@@ -235,13 +251,6 @@ class ProfileController extends Controller
         **Career Path Prediction:**
         Provide the career path as a bulleted list, with each bullet point describing a potential stage or role at specific timeframes (e.g., 'After 2 years:', 'After 5 years:', 'After 10 years:'). Make sure to always include at least three distinct timeframes and career stages.
 
-        **Chart Data Generation:**
-        Also, generate data for two charts based *only* on the provided 'Alumni Data'.
-        1.  **Pie Chart**: Show the distribution of 'Industry' among the alumni.
-        2.  **Bar Chart**: Show the distribution of 'Job Title' among the alumni.
-        
-        Ensure the chart data is significant and directly reflects the trends in the provided alumni data. If a category has very few entries, you can group it into 'Other'.
-
         **User's Profile:**
         Experience: {$userExperience}
         Education: {$userEducation}
@@ -249,20 +258,15 @@ class ProfileController extends Controller
         **Alumni Data ({$yearFilter} years):**
         {$alumniInfo}
 
-        Format your entire response as a JSON object with three keys: 'insight' (string), 'prediction' (string, containing the bulleted career path), and 'chart_data' (object).
-        The 'chart_data' object should contain 'pie_chart' (array of {label: string, value: number}) and 'bar_chart' (array of {label: string, value: number}).
-
+        Format your entire response as a JSON object with two keys: 'insight' (string) and 'prediction' (string, containing the bulleted career path).
+        
         Example JSON structure:
         {
             \"insight\": \"Your diverse experience in X and strong educational background in Y suggest a strong foundation for roles in Z.\",
-            \"prediction\": \"- After 2 years: [Role suggestion]\\n- After 5 years: [Role suggestion]\\n- After 10 years: [Role suggestion]\",
-            \"chart_data\": {
-                \"pie_chart\": [{\"label\": \"Software Industry\", \"value\": 45}, {\"label\": \"Healthcare Industry\", \"value\": 25}],
-                \"bar_chart\": [{\"label\": \"Software Engineer\", \"value\": 30}, {\"label\": \"Project Manager\", \"value\": 20}]
-            }
+            \"prediction\": \"- After 2 years: [Role suggestion]\\n- After 5 years: [Role suggestion]\\n- After 10 years: [Role suggestion]\"
         }";
 
-        // 4. Call OpenAI API
+        // 5. Call OpenAI API
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
@@ -270,11 +274,11 @@ class ProfileController extends Controller
             ])->post('https://api.openai.com/v1/chat/completions', [
                 'model' => 'gpt-4o-mini', // Using gpt-4o-mini as it's cost-effective and often sufficient
                 'messages' => [
-                    ['role' => 'system', 'content' => 'You are a career prediction and insights AI. Provide personal insights, career path predictions, and data for charts based on user and alumni data. Ensure the output is a valid JSON object. The career path should be a bulleted list with timeframes. The chart data must be derived directly from the provided alumni data.'],
+                    ['role' => 'system', 'content' => 'You are a career prediction and insights AI. Provide personal insights and career path predictions based on user and alumni data. Ensure the output is a valid JSON object. The career path should be a bulleted list with timeframes.'],
                     ['role' => 'user', 'content' => $prompt],
                 ],
                 'temperature' => 0.7,
-                'max_tokens' => 1500, // Increased max_tokens for more detailed response and chart data
+                'max_tokens' => 1500, // Increased max_tokens for more detailed response
                 'response_format' => ['type' => 'json_object'], // Request JSON output
             ]);
 
@@ -295,7 +299,6 @@ class ProfileController extends Controller
                 ]);
             }
 
-
             if (is_null($aiResponseContent)) {
                 Log::error('OpenAI response content is null or missing.');
                 return response()->json(['error' => 'AI did not return a valid response content.'], 500);
@@ -309,7 +312,10 @@ class ProfileController extends Controller
                 return response()->json(['error' => 'AI response was not in expected JSON format. Please try again or contact support.'], 500);
             }
 
-            return response()->json($parsedResponse);
+            // Merge AI response with server-generated chart data
+            $finalResponse = array_merge($parsedResponse, ['chart_data' => $chartData]);
+
+            return response()->json($finalResponse);
 
         } catch (\Exception $e) {
             Log::error('Prediction error: ' . $e->getMessage());
