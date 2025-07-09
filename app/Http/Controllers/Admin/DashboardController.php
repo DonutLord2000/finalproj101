@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\NewsPost;
+use App\Models\Alumni; // Added this line
 
 class DashboardController extends Controller
 {
@@ -103,15 +104,15 @@ class DashboardController extends Controller
         // Get total registered users (admin only)
         $totalUsers = User::count();
 
-        // Get salary ranges with anonymized data
-        $salaryRanges = [
-            'Below php30k' => DB::table('alumni')->where('monthly_salary', '<', 30000)->count(),
-            'php30k-php50k' => DB::table('alumni')->whereBetween('monthly_salary', [30000, 50000])->count(),
-            'php50k-php70k' => DB::table('alumni')->whereBetween('monthly_salary', [50001, 70000])->count(),
-            'php70k-php100k' => DB::table('alumni')->whereBetween('monthly_salary', [70001, 100000])->count(),
-            'php100k-php150k' => DB::table('alumni')->whereBetween('monthly_salary', [100001, 150000])->count(),
-            'Above php150k' => DB::table('alumni')->where('monthly_salary', '>', 150000)->count(),
-        ];
+        // Get employment status distribution (NEW)
+        $employmentStatus = DB::table('alumni')
+            ->select('employment_status', DB::raw('count(*) as count'))
+            ->groupBy('employment_status')
+            ->pluck('count', 'employment_status')
+            ->toArray();
+
+        // Removed salaryRanges
+        // $salaryRanges = [ ... ];
 
         return view('dashboard', compact(
             'dailyActiveUsers', 'weeklyActiveUsers', 'monthlyActiveUsers',
@@ -122,7 +123,7 @@ class DashboardController extends Controller
             'topIndustries',
             'topDegreePrograms',
             'jobTitlesByMajor',
-            'salaryRanges'
+            'employmentStatus' // Changed from 'salaryRanges'
         ));
     }
 
@@ -178,15 +179,12 @@ class DashboardController extends Controller
             ->take(5) // Top 5 degree programs only
             ->toArray();
 
-        // Get salary ranges with anonymized data for guests too
-        $salaryRanges = [
-            'Below php30k' => DB::table('alumni')->where('monthly_salary', '<', 30000)->count(),
-            'php30k-php50k' => DB::table('alumni')->whereBetween('monthly_salary', [30000, 50000])->count(),
-            'php50k-php70k' => DB::table('alumni')->whereBetween('monthly_salary', [50001, 70000])->count(),
-            'php70k-php100k' => DB::table('alumni')->whereBetween('monthly_salary', [70001, 100000])->count(),
-            'php100k-php150k' => DB::table('alumni')->whereBetween('monthly_salary', [100001, 150000])->count(),
-            'Above php150k' => DB::table('alumni')->where('monthly_salary', '>', 150000)->count(),
-        ];
+        // Get employment status distribution for guests too (NEW)
+        $employmentStatus = DB::table('alumni')
+            ->select('employment_status', DB::raw('count(*) as count'))
+            ->groupBy('employment_status')
+            ->pluck('count', 'employment_status')
+            ->toArray();
     
         // For guest users, we'll set these to 0 or empty values
         $dailyActiveUsers = 0;
@@ -208,66 +206,8 @@ class DashboardController extends Controller
             'topIndustries',
             'topDegreePrograms',
             'jobTitlesByMajor',
-            'salaryRanges'
+            'employmentStatus' // Changed from 'salaryRanges'
         ));
-    }
-
-    private function getRegistrations($period, $limit)
-    {
-        switch ($period) {
-            case 'daily':
-                $query = User::select(
-                    DB::raw('DATE(created_at) as date'),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->where('created_at', '>=', now()->subDays($limit))
-                ->groupBy('date')
-                ->orderBy('date');
-                $format = 'M d';
-                break;
-            case 'monthly':
-                $query = User::select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('MONTH(created_at) as month'),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->where('created_at', '>=', now()->subMonths($limit))
-                ->groupBy('year', 'month')
-                ->orderBy('year')
-                ->orderBy('month');
-                $format = 'M Y';
-                break;
-            case 'yearly':
-                $query = User::select(
-                    DB::raw('YEAR(created_at) as year'),
-                    DB::raw('COUNT(*) as count')
-                )
-                ->where('created_at', '>=', now()->subYears($limit))
-                ->groupBy('year')
-                ->orderBy('year');
-                $format = 'Y';
-                break;
-        }
-
-        $results = $query->get();
-
-        $labels = $results->map(function ($item) use ($format, $period) {
-            switch ($period) {
-                case 'daily':
-                    return Carbon::parse($item->date)->format($format);
-                case 'monthly':
-                    return Carbon::createFromDate($item->year, $item->month, 1)->format($format);
-                case 'yearly':
-                    return $item->year;
-            }
-        })->toArray();
-
-        $data = $results->pluck('count')->toArray();
-
-        return [
-            'labels' => $labels,
-            'data' => $data
-        ];
     }
 
     private function calculateGrowth(int $current, int $previous): float
@@ -278,4 +218,3 @@ class DashboardController extends Controller
         return $current > 0 ? 100 : 0;
     }
 }
-

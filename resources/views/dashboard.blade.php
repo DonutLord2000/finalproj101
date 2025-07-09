@@ -12,42 +12,45 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-8">
                 <h2 class="text-3xl font-bold text-gray-900 mb-8">Alumni Tracer Statistics</h2>
-                
-                <!-- Top Row Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @if(auth()->user()->role === 'admin')
+                <!-- First Row: Total Registered Users, Alumni Tracer Responses, Industry Distribution, Employment Status Distribution -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                     <!-- Total Registered Users Card (Admin Only) -->
-                    @if(auth()->user()->role === 'admin')
+                    
                     <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl shadow-lg p-6 transform transition-all hover:scale-105">
                         <h3 class="text-xl font-semibold text-gray-700 mb-4">Total Registered Users</h3>
                         <p class="font-bold text-indigo-600" style="font-size: 150px;">{{ $totalUsers }}</p>
                     </div>
-                    @endif
-                    <!-- Total Alumni Card -->
+                    
+                    <!-- Total Alumni Card (Admin Only) -->
+                    
                     <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-lg p-6 transform transition-all hover:scale-105">
                         <h3 class="text-xl font-semibold text-gray-700 mb-4">Alumni Tracer Responses</h3>
                         <p class="font-bold text-blue-600" style="font-size: 150px;">{{ $totalAlumni }}</p>
                     </div>
-
+                    
+  
                     <!-- Industry Distribution Card -->
                     <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-lg p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-4">Industry Distribution</h3>
                         <canvas id="industryChart" class="w-full h-48"></canvas>
                     </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-5">
-                    <!-- Salary Range Distribution Card (Spans 2 columns) -->
-                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-lg p-6 mt-6 col-span-1 md:col-span-2">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Salary Range Distribution
+  
+                    <!-- Employment Status Distribution Card (Admin Only) -->
+                    
+                    <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">
+                            Employment Status
                         </h3>
-                        <canvas id="salaryChart" class="w-full h-64"></canvas>
+                        <canvas id="employmentStatusChart" class="w-full h-48"></canvas> {{-- Changed h-64 to h-48 --}}
                     </div>
+                    
+                </div>@endif
+  
+                <!-- Second Row: Graduates Year Trends, Top Industries and Top Degree Programs (stacked) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
                     <!-- Graduation Year Trends Card -->
-                    <div class="bg-gradient-to-br from-red-100 to-yellow-100 rounded-xl shadow-lg p-6 mt-6 col-span-1 md:col-span-2">
+                    <div class="bg-gradient-to-br from-red-100 to-yellow-100 rounded-xl shadow-lg p-6">
                         <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                             <svg class="w-6 h-6 mr-2 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v4m-4-4v4m8-4v4M5 8l7-7 7 7M5 8h14v11H5V8z" />
@@ -56,52 +59,53 @@
                         </h3>
                         <canvas id="graduationChart" class="w-full h-full"></canvas>
                     </div>
-                </div>
-
-                <!-- Bottom Row Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Top Industries Card -->
-                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg p-6">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Top Industries</h3>
-                        <div class="space-y-4">
-                            @php
-                                $totalIndustries = array_sum($topIndustries);
-                            @endphp
-                            @foreach($topIndustries as $industry => $count)
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-700 font-medium">{{ $industry }}</span>
-                                <div class="flex items-center">
-                                    <div class="h-2.5 rounded-full bg-purple-200 w-32 mr-2">
-                                        <div class="h-2.5 rounded-full bg-purple-600" style="width: {{ ($count / $totalIndustries) * 100 }}%"></div>
+  
+                    <!-- Container for Top Industries and Top Degree Programs (stacked) -->
+                    <div class="flex flex-col gap-6">
+                        <!-- Top Industries Card -->
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-4">Top Industries</h3>
+                            <div class="space-y-4">
+                                @php
+                                    $totalIndustries = array_sum($topIndustries);
+                                @endphp
+                                @foreach($topIndustries as $industry => $count)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-700 font-medium">{{ $industry }}</span>
+                                    <div class="flex items-center">
+                                        <div class="h-2.5 rounded-full bg-purple-200 w-32 mr-2">
+                                            <div class="h-2.5 rounded-full bg-purple-600" style="width: {{ ($count / $totalIndustries) * 100 }}%"></div>
+                                        </div>
+                                        <span class="text-gray-600 font-semibold">{{ round(($count / $totalIndustries) * 100, 1) }}%</span>
                                     </div>
-                                    <span class="text-gray-600 font-semibold">{{ round(($count / $totalIndustries) * 100, 1) }}%</span>
                                 </div>
+                                @endforeach
                             </div>
-                            @endforeach
+                        </div>
+                    
+                        <!-- Top Degree Programs Card -->
+                        <div class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl shadow-lg p-6">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-4">Top Degree Programs</h3>
+                            <div class="space-y-4">
+                                @php
+                                    $totalPrograms = array_sum($topDegreePrograms);
+                                @endphp
+                                @foreach($topDegreePrograms as $program => $count)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-700 font-medium">{{ $program }}</span>
+                                    <div class="flex items-center">
+                                        <div class="h-2.5 rounded-full bg-pink-200 w-32 mr-2">
+                                            <div class="h-2.5 rounded-full bg-pink-600" style="width: {{ ($count / $totalPrograms) * 100 }}%"></div>
+                                        </div>
+                                        <span class="text-gray-600 font-semibold">{{ round(($count / $totalPrograms) * 100, 1) }}%</span>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-                
-                    <!-- Top Degree Programs Card -->
-                    <div class="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl shadow-lg p-6">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Top Degree Programs</h3>
-                        <div class="space-y-4">
-                            @php
-                                $totalPrograms = array_sum($topDegreePrograms);
-                            @endphp
-                            @foreach($topDegreePrograms as $program => $count)
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-700 font-medium">{{ $program }}</span>
-                                <div class="flex items-center">
-                                    <div class="h-2.5 rounded-full bg-pink-200 w-32 mr-2">
-                                        <div class="h-2.5 rounded-full bg-pink-600" style="width: {{ ($count / $totalPrograms) * 100 }}%"></div>
-                                    </div>
-                                    <span class="text-gray-600 font-semibold">{{ round(($count / $totalPrograms) * 100, 1) }}%</span>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
                 </div>
+  
                 <div class="mt-6">
                     <h4 class="text-2xl font-bold text-gray-900 mb-4 mt-4">Common Job Titles and Industries by Degree</h4>
                     <div class="overflow-x-auto">
@@ -128,7 +132,8 @@
                 
             </div>
             
-
+  
+            @if(auth()->user()->role === 'admin')
             <div class="max-w-7xl mx-auto">
                 <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
                     <h3 class="text-lg font-semibold mb-6 flex items-center">
@@ -226,14 +231,14 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
+            @endif
+  
             <!-- NEws post -->
             <div class="py-12">
                 <div class="max-w-7xl mx-auto">
                     <div class="bg-white overflow-hidden shadow-md sm:rounded-lg">
                        <h2 class="text-2xl font-semibold text-gray-800 mt-4 mb-4 text-center mx-auto">Latest News</h2>
-
+  
                             @foreach ($newsPosts as $post)
                             
                                 <div class="ml-10 mr-10 mb-8 relative border-l-4 border-l-gray-200 bg-white shadow-md rounded-lg overflow-hidden mx-auto">
@@ -276,7 +281,7 @@
                 </div>
             </div>
     </div>
-
+  
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -310,11 +315,13 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: true,
+                        cutout: '0%', // Added for consistent doughnut size
                         plugins: {
                             legend: {
                                 position: 'bottom',
                                 labels: {
                                     padding: 20,
+                                    boxWidth: 10, // Added for consistent legend box size
                                     font: {
                                         size: 12
                                     }
@@ -324,7 +331,7 @@
                     }
                 });
             }
-
+  
             // Graduation Year Trends Chart
             const gradCtx = document.getElementById('graduationChart');
             if (gradCtx) {
@@ -395,50 +402,53 @@
                                     }
                                 },
                                 grid: {
-                                    color: 'rgba(209, 213, 219, 0.5)', // Light gray gridlines
-                                    borderDash: [5, 5] // Dashed lines
+                                    color: 'rgba(209, 213, 219, 0.5)',
+                                    borderDash: [5, 5]
                                 }
                             }
                         }
                     }
                 });
             }
-
-            // Salary Range Chart
-            const salaryCtx = document.getElementById('salaryChart');
-            if (salaryCtx) {
-                new Chart(salaryCtx, {
-                    type: 'line', // Changed from 'bar' to 'line'
+  
+            // Employment Status Distribution Chart
+            const employmentStatusCtx = document.getElementById('employmentStatusChart');
+            if (employmentStatusCtx) {
+                new Chart(employmentStatusCtx, {
+                    type: 'doughnut',
                     data: {
-                        labels: Object.keys(@json($salaryRanges)),
+                        labels: Object.keys(@json($employmentStatus)),
                         datasets: [{
-                            label: 'Number of Alumni',
-                            data: Object.values(@json($salaryRanges)),
-                            backgroundColor: 'rgba(245, 158, 11, 0.2)', // Amber with transparency
-                            borderColor: 'rgba(217, 119, 6, 1)',
-                            borderWidth: 3,
-                            pointBackgroundColor: 'rgba(245, 158, 11, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(217, 119, 6, 1)',
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            tension: 0.3, // Adds a slight curve to the line
-                            fill: true // Fill area under the line
+                            data: Object.values(@json($employmentStatus)),
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.8)',  // Teal for 'Employed'
+                                'rgba(255, 99, 132, 0.8)',   // Pink for 'Private'
+                                'rgba(255, 205, 86, 0.8)',   // Yellow for 'Unemployed'
+                                'rgba(54, 162, 235, 0.8)',   // Blue (additional if more categories)
+                                'rgba(153, 102, 255, 0.8)'   // Purple (additional if more categories)
+                            ],
+                            borderColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(255, 205, 86, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: true,
-                        aspectRatio: 2,
+                        cutout: '0%', // Added for consistent doughnut size
                         plugins: {
                             legend: {
-                                display: true,
+                                position: 'bottom',
                                 labels: {
-                                    color: '#4B5563',
+                                    padding: 20,
+                                    boxWidth: 10, // Added for consistent legend box size
                                     font: {
-                                        family: 'Inter, sans-serif',
-                                        size: 14
+                                        size: 12
                                     }
                                 }
                             },
@@ -457,33 +467,6 @@
                                 borderWidth: 1,
                                 padding: 10
                             }
-                        },
-                        scales: {
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    color: '#6B7280',
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0,
-                                    color: '#6B7280',
-                                    font: {
-                                        size: 12
-                                    }
-                                },
-                                grid: {
-                                    color: 'rgba(209, 213, 219, 0.5)',
-                                    borderDash: [5, 5]
-                                }
-                            }
                         }
                     }
                 });
@@ -491,4 +474,5 @@
         });
     </script>
     @endpush
-</x-app-layout>
+  </x-app-layout>
+  
