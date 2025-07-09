@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LumnixChatController;
+use App\Http\Controllers\IdVerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,3 +35,6 @@ Route::get('/lumnix-user-info', [LumnixChatController::class, 'getUserInfo'])->m
 // Add this route after the existing Lumnix chatbot API endpoints
 
 Route::post('/lumnix-clear-history', [LumnixChatController::class, 'clearChatHistory'])->middleware('web');
+
+// New route for ID verification
+Route::post('/verify-id', [IdVerificationController::class, 'verifyId']);
