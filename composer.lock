@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b7fb8b221123c62ec12f23f9ce17ab90",
+    "content-hash": "31f7c201db2bb31e87101e1e62a8e5a5",
     "packages": [
         {
             "name": "askdkc/breezejp",
