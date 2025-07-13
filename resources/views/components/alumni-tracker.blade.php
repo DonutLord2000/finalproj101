@@ -530,6 +530,36 @@
             updateDisplay();
         }
 
+        // --- New functions for client-side chart data aggregation ---
+        function getEmploymentStatusDistribution(alumniData) {
+            const distribution = {};
+            alumniData.forEach(alumnus => {
+                const status = alumnus.employment_status || 'Unknown';
+                distribution[status] = (distribution[status] || 0) + 1;
+            });
+
+            const total = alumniData.length;
+            const percentages = {};
+            for (const status in distribution) {
+                percentages[status] = (distribution[status] / total) * 100;
+            }
+            return percentages;
+        }
+
+        function getTopCategories(alumniData, categoryKey, limit = 5) {
+            const counts = {};
+            alumniData.forEach(alumnus => {
+                const category = alumnus[categoryKey] || 'Unknown';
+                counts[category] = (counts[category] || 0) + 1;
+            });
+
+            const sortedCategories = Object.entries(counts)
+                .sort(([, countA], [, countB]) => countB - countA)
+                .slice(0, limit)
+                .map(([category, count]) => ({ [categoryKey]: category, count }));
+            
+            return sortedCategories;
+        }
 
         // Function to fetch and display AI insights
         async function fetchInsights(params, isIndividualSearch = false) {
@@ -541,13 +571,14 @@
             try {
                 const queryString = new URLSearchParams(params).toString();
                 const response = await fetch(`/admin/alumni-tracker/insights?${queryString}`);
-                const data = await response.json();
+                const responseData = await response.json(); // Renamed to avoid conflict with 'data' variable
 
                 if (!response.ok) {
-                    throw new Error(data.insight || 'Failed to fetch insights.');
+                    throw new Error(responseData.insight || 'Failed to fetch insights.');
                 }
 
                 if (isIndividualSearch) {
+                    const data = responseData; // For individual, the whole response is the insight
                     // Render structured data for individual insights
                     let htmlContent = '';
                     if (data.name) {
@@ -595,40 +626,45 @@
                     aiInsightsDisplay.innerHTML = htmlContent;
 
                 } else {
-                    // Display structured data for group insights
+                    // For group analysis, responseData contains both ai_insights and alumni_data
+                    const aiInsights = responseData.ai_insights;
+                    const alumniData = responseData.alumni_data;
+
                     let htmlContent = '';
-                    if (data.summary) {
-                        htmlContent += `<p class="mb-4">${data.summary}</p>`;
+                    if (aiInsights.summary) {
+                        htmlContent += `<p class="mb-4">${aiInsights.summary}</p>`;
                     }
-                    if (data.key_trends && data.key_trends.length > 0) {
+                    if (aiInsights.key_trends && aiInsights.key_trends.length > 0) {
                         htmlContent += '<h4 class="text-xl font-semibold text-gray-800 mb-2">Key Trends:</h4>';
                         htmlContent += '<ul class="list-disc list-inside mb-4 space-y-1">';
-                        data.key_trends.forEach(trend => {
+                        aiInsights.key_trends.forEach(trend => {
                             htmlContent += `<li>${trend}</li>`;
                         });
                         htmlContent += '</ul>';
                     }
-                    if (data.career_progression_notes) {
+                    if (aiInsights.career_progression_notes) {
                         htmlContent += `<h4 class="text-xl font-semibold text-gray-800 mb-2">Career Progression Notes:</h4>`;
-                        htmlContent += `<p class="mb-4">${data.career_progression_notes}</p>`;
+                        htmlContent += `<p class="mb-4">${aiInsights.career_progression_notes}</p>`;
                     }
 
                     aiInsightsDisplay.innerHTML = htmlContent;
 
-                    // Render charts if data is available
-                    if (data.employment_status_distribution || data.top_industries || data.top_degree_programs) {
+                    // Render charts using client-side aggregated data
+                    if (alumniData && alumniData.length > 0) {
                         groupChartsContainer.classList.remove('hidden');
 
-                        if (data.employment_status_distribution && Object.keys(data.employment_status_distribution).length > 0) {
+                        // Employment Status Distribution Chart
+                        const employmentStatusData = getEmploymentStatusDistribution(alumniData);
+                        if (Object.keys(employmentStatusData).length > 0) {
                             const canvas = recreateCanvas('employmentStatusChart');
                             if (canvas) {
                                 const ctx = canvas.getContext('2d');
                                 new Chart(ctx, {
                                     type: 'pie',
                                     data: {
-                                        labels: Object.keys(data.employment_status_distribution),
+                                        labels: Object.keys(employmentStatusData),
                                         datasets: [{
-                                            data: Object.values(data.employment_status_distribution),
+                                            data: Object.values(employmentStatusData),
                                             backgroundColor: [
                                                 'rgba(75, 192, 192, 0.8)', // Teal
                                                 'rgba(255, 99, 132, 0.8)', // Red
@@ -651,17 +687,19 @@
                             }
                         }
 
-                        if (data.top_industries && data.top_industries.length > 0) {
+                        // Top Industries Chart
+                        const topIndustries = getTopCategories(alumniData, 'industry');
+                        if (topIndustries.length > 0) {
                             const canvas = recreateCanvas('topIndustriesChart');
                             if (canvas) {
                                 const ctx = canvas.getContext('2d');
                                 new Chart(ctx, {
                                     type: 'bar',
                                     data: {
-                                        labels: data.top_industries.map(item => item.industry),
+                                        labels: topIndustries.map(item => item.industry),
                                         datasets: [{
                                             label: 'Number of Alumni',
-                                            data: data.top_industries.map(item => item.count),
+                                            data: topIndustries.map(item => item.count),
                                             backgroundColor: 'rgba(153, 102, 255, 0.8)', // Purple
                                             borderColor: 'rgba(153, 102, 255, 1)',
                                             borderWidth: 1
@@ -681,17 +719,19 @@
                             }
                         }
 
-                        if (data.top_degree_programs && data.top_degree_programs.length > 0) {
+                        // Top Degree Programs Chart
+                        const topDegreePrograms = getTopCategories(alumniData, 'degree_program');
+                        if (topDegreePrograms.length > 0) {
                             const canvas = recreateCanvas('topDegreeProgramsChart');
                             if (canvas) {
                                 const ctx = canvas.getContext('2d');
                                 new Chart(ctx, {
                                     type: 'bar',
                                     data: {
-                                        labels: data.top_degree_programs.map(item => item.program),
+                                        labels: topDegreePrograms.map(item => item.degree_program),
                                         datasets: [{
                                             label: 'Number of Alumni',
-                                            data: data.top_degree_programs.map(item => item.count),
+                                            data: topDegreePrograms.map(item => item.count),
                                             backgroundColor: 'rgba(255, 159, 64, 0.8)', // Orange
                                             borderColor: 'rgba(255, 159, 64, 1)',
                                             borderWidth: 1
@@ -710,6 +750,9 @@
                                 });
                             }
                         }
+                    } else {
+                        // If no alumni data for charts, hide the container
+                        groupChartsContainer.classList.add('hidden');
                     }
                 }
 

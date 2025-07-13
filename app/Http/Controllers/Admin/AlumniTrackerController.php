@@ -171,16 +171,14 @@ class AlumniTrackerController extends Controller
                           "Alumnus Data:\n" . $promptData;
             Log::info('OpenAI prompt for individual (structured): ' . $userPrompt);
         } else {
-            $userPrompt = "Analyze the following alumni data and provide comprehensive insights in JSON format. Focus on career progression, common industries/job titles for their degrees, and employment trends. Include a general summary, key trends as bullet points, and data for charts. Ensure all percentages sum to 100% where applicable. The JSON structure should be:\n" .
+            // Modified prompt for group analysis: remove chart data requests
+            $userPrompt = "Analyze the following alumni data and provide comprehensive insights in JSON format. Focus on career progression, common industries/job titles for their degrees, and employment trends. The JSON structure should be:\n" .
                           "{\n" .
                           "  \"summary\": \"[General summary paragraph]\",\n" .
                           "  \"key_trends\": [\"[Trend 1]\", \"[Trend 2]\", ...],\n" .
-                          "  \"employment_status_distribution\": {\"Status1\": Percentage, \"Status2\": Percentage, ...},\n" .
-                          "  \"top_industries\": [{\"industry\": \"[Name]\", \"count\": [Number]}, ...],\n" .
-                          "  \"top_degree_programs\": [{\"program\": \"[Name]\", \"count\": [Number]}, ...],\n" .
                           "  \"career_progression_notes\": \"[Optional notes on career progression]\"\n" .
                           "}\n\n" .
-                          "Alumni Data:\n" . $promptData;
+                          "Alumni Data: " . $promptData;
             Log::info('OpenAI prompt for group: ' . $userPrompt);
         }
 
@@ -211,6 +209,13 @@ class AlumniTrackerController extends Controller
 
             if (json_last_error() === JSON_ERROR_NONE && is_array($parsedInsight)) {
                 Log::info('Insight JSON parsed successfully.');
+                // For group analysis, return both AI insights and raw alumni data
+                if (!$alumniId) {
+                    return response()->json([
+                        'ai_insights' => $parsedInsight,
+                        'alumni_data' => $alumniData->toArray() // Return raw data for client-side charting
+                    ]);
+                }
                 return response()->json($parsedInsight);
             } else {
                 Log::error('OpenAI returned invalid JSON: ' . $insightContent);
