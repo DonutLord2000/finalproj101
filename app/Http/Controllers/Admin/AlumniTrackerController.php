@@ -51,8 +51,9 @@ class AlumniTrackerController extends Controller
             return response()->json([]);
         }
 
+        // Convert both the column and the query to lowercase for case-insensitive search
         $alumni = Alumnus::select('id', 'name')
-                        ->where('name', 'like', '%' . $query . '%')
+                        ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])
                         ->limit(10)
                         ->get();
 
