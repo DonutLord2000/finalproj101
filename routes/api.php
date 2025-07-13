@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LumnixChatController;
 use App\Http\Controllers\IdVerificationController;
+use App\Http\Controllers\AlumniTrackerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,3 +39,8 @@ Route::post('/lumnix-clear-history', [LumnixChatController::class, 'clearChatHis
 
 // New route for ID verification
 Route::post('/verify-id', [IdVerificationController::class, 'verifyId']);
+
+// Alumni Tracker Routes
+Route::get('/admin/alumni-tracker/filter-options', [AlumniTrackerController::class, 'getFilterOptions']);
+Route::get('/admin/alumni-tracker/search', [AlumniTrackerController::class, 'searchAlumni']);
+Route::get('/admin/alumni-tracker/insights', [AlumniTrackerController::class, 'getAlumniInsights']);

@@ -20,6 +20,7 @@ use App\Http\Controllers\ScholarshipController;
 use App\Http\Controllers\Admin\ScholarshipTabController;
 use App\Http\Controllers\Admin\ScholarshipFormController;
 use Illuminate\Support\Facades\Response;
+use App\Http\Controllers\Admin\AlumniTrackerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -180,3 +181,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 });
+
+// Alumni Tracker Routes
+Route::get('/admin/alumni-tracker/filter-options', [AlumniTrackerController::class, 'getFilterOptions']);
+Route::get('/admin/alumni-tracker/search', [AlumniTrackerController::class, 'searchAlumni']);
+Route::get('/admin/alumni-tracker/insights', [AlumniTrackerController::class, 'getAlumniInsights']);
