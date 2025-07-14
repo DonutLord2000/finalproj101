@@ -237,16 +237,43 @@
                 <div class="p-6">
                     <h2 class="text-xl font-bold text-gray-900 mb-4">Career Path Prediction & Insights</h2>
 
-                    <div class="flex flex-col items-center justify-center gap-4 mb-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
                         <button id="predict-button" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
                             Get Prediction & Insights
                         </button>
                         <div class="w-full sm:w-1/2 md:w-1/3">
-                            <label for="prediction_year_select" class="sr-only">Compare with alumni from:</label>
-                            <select id="prediction_year_select" name="prediction_year" class="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <label for="prediction_filter_type" class="sr-only">Compare with alumni from:</label>
+                            <select id="prediction_filter_type" name="prediction_filter_type" class="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                 <option value="all" selected>All Graduates</option>
+                                <option value="specific">Specific Year</option>
+                                <option value="range">Custom Range</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="specific_year_container" class="w-full sm:w-1/2 md:w-1/3 mx-auto mb-4 hidden">
+                        <label for="specific_year_select" class="sr-only">Select Specific Year:</label>
+                        <select id="specific_year_select" name="specific_year" class="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            @foreach($alumniYears as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div id="year_range_container" class="w-full sm:w-full md:w-2/3 mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 hidden">
+                        <div>
+                            <label for="from_year_select" class="block text-sm font-medium text-gray-700">From Year:</label>
+                            <select id="from_year_select" name="from_year" class="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                 @foreach($alumniYears as $year)
                                     <option value="{{ $year }}">{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="to_year_select" class="block text-sm font-medium text-gray-700">To Year:</label>
+                            <select id="to_year_select" name="to_year" class="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                @foreach($alumniYears as $year)
+                                    <option value="{{ $year }}" @if($loop->last) selected @endif>{{ $year }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -767,7 +794,12 @@
                     });
 
                     // --- Career Prediction Script ---
-                    const predictionYearSelect = document.getElementById('prediction_year_select');
+                    const predictionFilterTypeSelect = document.getElementById('prediction_filter_type');
+                    const specificYearContainer = document.getElementById('specific_year_container');
+                    const specificYearSelect = document.getElementById('specific_year_select');
+                    const yearRangeContainer = document.getElementById('year_range_container');
+                    const fromYearSelect = document.getElementById('from_year_select');
+                    const toYearSelect = document.getElementById('to_year_select');
                     const predictButton = document.getElementById('predict-button');
                     const predictionLoading = document.getElementById('prediction-loading');
                     const predictionResults = document.getElementById('prediction-results');
@@ -784,10 +816,24 @@
 
                     function updatePredictButtonState() {
                         const canPredict = userHasExperience && userHasEducation;
-                        
-                  
+                        predictButton.disabled = !canPredict;
                         predictButton.title = canPredict ? "Click to get your career prediction and insights" : "Please add at least one experience and one education entry to enable prediction.";
                     }
+
+                    function toggleYearSelectors() {
+                        const selectedType = predictionFilterTypeSelect.value;
+                        specificYearContainer.classList.add('hidden');
+                        yearRangeContainer.classList.add('hidden');
+
+                        if (selectedType === 'specific') {
+                            specificYearContainer.classList.remove('hidden');
+                        } else if (selectedType === 'range') {
+                            yearRangeContainer.classList.remove('hidden');
+                        }
+                    }
+
+                    predictionFilterTypeSelect.addEventListener('change', toggleYearSelectors);
+                    toggleYearSelectors(); // Call on load to set initial state
 
                     updatePredictButtonState(); // Set initial state on page load
 
@@ -798,13 +844,16 @@
                         predictionLoading.classList.remove('hidden');
                         predictButton.disabled = true; // Disable button during prediction
 
-                        const selectedYearValue = predictionYearSelect.value;
-                        let yearFilter = 'all';
-                        let specificYear = null;
+                        const selectedFilterType = predictionFilterTypeSelect.value;
+                        let requestBody = {
+                            year_filter_type: selectedFilterType
+                        };
 
-                        if (selectedYearValue !== 'all') {
-                            yearFilter = 'specific';
-                            specificYear = selectedYearValue;
+                        if (selectedFilterType === 'specific') {
+                            requestBody.specific_year = specificYearSelect.value;
+                        } else if (selectedFilterType === 'range') {
+                            requestBody.from_year = fromYearSelect.value;
+                            requestBody.to_year = toYearSelect.value;
                         }
 
                         try {
@@ -814,10 +863,7 @@
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': csrfToken
                                 },
-                                body: JSON.stringify({
-                                    year_filter: yearFilter,
-                                    specific_year: specificYear
-                                })
+                                body: JSON.stringify(requestBody)
                             });
 
                             const data = await response.json();

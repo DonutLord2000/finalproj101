@@ -198,15 +198,23 @@ class ProfileController extends Controller
             return response()->json(['error' => 'Please add at least one experience and one education entry to get a prediction.'], 400);
         }
 
-        $yearFilter = $request->input('year_filter', 'all'); // 'all' or 'specific'
+        $yearFilterType = $request->input('year_filter_type', 'all'); // 'all', 'specific', 'range'
         $specificYear = $request->input('specific_year');
+        $fromYear = $request->input('from_year');
+        $toYear = $request->input('to_year');
 
         // 2. Fetch alumni data from the 'alumni' table
         $alumniQuery = DB::table('alumni')
             ->select('degree_program', 'major', 'year_graduated', 'job_title', 'industry');
 
-        if ($yearFilter === 'specific' && $specificYear) {
+        if ($yearFilterType === 'specific' && $specificYear) {
             $alumniQuery->where('year_graduated', $specificYear);
+        } elseif ($yearFilterType === 'range' && $fromYear && $toYear) {
+            // Basic validation: ensure fromYear <= toYear
+            if ($fromYear > $toYear) {
+                return response()->json(['error' => 'The "From Year" cannot be greater than the "To Year".'], 400);
+            }
+            $alumniQuery->whereBetween('year_graduated', [$fromYear, $toYear]);
         }
         $alumniData = $alumniQuery->get();
 
@@ -252,6 +260,15 @@ class ProfileController extends Controller
             return "{$item['label']}: {$item['value']} alumni";
         })->implode("\n- ");
 
+        $alumniFilterDescription = '';
+        if ($yearFilterType === 'specific' && $specificYear) {
+            $alumniFilterDescription = "for graduates of {$specificYear}";
+        } elseif ($yearFilterType === 'range' && $fromYear && $toYear) {
+            $alumniFilterDescription = "for graduates from {$fromYear} to {$toYear}";
+        } else {
+            $alumniFilterDescription = "for all graduates";
+        }
+
         $prompt = "Based on the user's current profile (experience and education) and the provided alumni data, provide both personal insights and a career path prediction.
 
         **Personal Insights:**
@@ -264,7 +281,7 @@ class ProfileController extends Controller
         Experience: {$userExperience}
         Education: {$userEducation}
 
-        **Alumni Data ({$yearFilter} years):**
+        **Alumni Data {$alumniFilterDescription}:**
         {$alumniInfo}
 
         **Alumni Industry Distribution:**
