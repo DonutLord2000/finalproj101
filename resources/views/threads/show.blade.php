@@ -10,7 +10,7 @@
             font-size: 0.875rem !important;
             color: #6b7280 !important;
         }
-        
+
         /* Style for the loading spinner */
         .loading-spinner {
             display: inline-block;
@@ -21,11 +21,11 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         /* Improved warning message styling */
         .text-red-500.text-sm.mt-1:not(.hidden) {
             padding: 0.5rem;
@@ -42,23 +42,28 @@
                 <div class="p-6">
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex items-start space-x-3">
-                            <img src="{{ $thread->user->profile?->profile_picture_url ?? $thread->user->profile_photo_url }}" alt="{{ $thread->user->name }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
+                            <img src="{{ $thread->display_profile_picture_url }}" alt="{{ $thread->user_display_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-300">
                             <div>
                                 <h3 class="text-xl font-semibold text-gray-900">
-                                    <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
-                                        {{ $thread->user->name }}
-                                    </a>
+                                    @if(!$thread->is_anonymous)
+                                        <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
+                                            {{ $thread->user_display_name }}
+                                        </a>
+                                    @else
+                                        {{ $thread->user_display_name }}
+                                    @endif
                                     @php
-                                    $bgColor = match($thread->user->role) {
+                                    $bgColor = match($thread->display_role) {
                                         'alumni' => 'inline-block px-2 py-1 bg-green-500 text-green-800 rounded',
                                                     'admin' => 'text-white inline-block px-2 py-1 bg-red-500 text-red-800 rounded',
                                                     'student' => 'inline-block px-2 py-1 bg-blue-500 text-blue-800 rounded',
+                                                    'guest' => 'inline-block px-2 py-1 bg-gray-500 text-gray-800 rounded', // Added guest role color
                                         default => 'bg-gray-200 text-gray-700',
                                     };
                                     @endphp
 
                                     <span class="text-sm font-normal {{ $bgColor }} px-2 py-1 rounded-full ml-2">
-                                        {{ $thread->user->role }}
+                                        {{ $thread->display_role }}
                                     </span>
                                 </h3>
                                 <p class="text-sm text-gray-500">
@@ -66,7 +71,7 @@
                                 </p>
                             </div>
                         </div>
-                        @if(auth()->user()->id === $thread->user_id || auth()->user()->role === 'admin')
+                        @if(auth()->check() && (auth()->user()->id === $thread->user_id || auth()->user()->role === 'admin'))
                             <div class="relative inline-block text-left">
                                 <div>
                                     <button type="button" class="inline-flex justify-center w-8 h-8 rounded-full border border-gray-300 shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500" id="options-menu" aria-haspopup="true" aria-expanded="true">
@@ -94,13 +99,13 @@
                 </div>
                 <div class="px-6 py-4 bg-gray-50 flex justify-between items-center">
                     <div class="flex space-x-4">
-                        <button class="react-btn flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors duration-200" data-type="upvote" data-thread="{{ $thread->id }}">
+                        <button class="react-btn flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors duration-200" data-type="upvote" data-thread="{{ $thread->id }}" @guest disabled @endguest>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                             </svg>
                             <span class="upvote-count">{{ $thread->upvotes }}</span>
                         </button>
-                        <button class="react-btn flex items-center space-x-1 text-gray-500 hover:text-pink-500 transition-colors duration-200" data-type="heart" data-thread="{{ $thread->id }}">
+                        <button class="react-btn flex items-center space-x-1 text-gray-500 hover:text-pink-500 transition-colors duration-200" data-type="heart" data-thread="{{ $thread->id }}" @guest disabled @endguest>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
@@ -121,28 +126,33 @@
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg shadow-xl mx-auto mb-2 w-full lg:w-[70rem]">
                         <div class="p-6">
                             <div class="flex items-start space-x-3">
-                                <img src="{{ $comment->user->profile?->profile_picture_url ?? $comment->user->profile_photo_url }}" alt="{{ $comment->user->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-300">
+                                <img src="{{ $comment->display_profile_picture_url }}" alt="{{ $comment->user_display_name }}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-300">
                                 <div class="flex-grow">
                                     <div class="flex justify-between items-start">
                                         <p class="font-semibold text-gray-900">
-                                            <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
-                                                {{ $comment->user->name }}
-                                            </a>
+                                            @if(!$comment->is_anonymous)
+                                                <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
+                                                    {{ $comment->user_display_name }}
+                                                </a>
+                                            @else
+                                                {{ $comment->user_display_name }}
+                                            @endif
                                             @php
-                                                $bgColor = match($comment->user->role) {
+                                                $bgColor = match($comment->display_role) {
                                                     'alumni' => 'inline-block px-2 py-1 bg-green-500 text-green-800 rounded',
                                                     'admin' => 'text-white inline-block px-2 py-1 bg-red-500 text-red-800 rounded',
                                                     'student' => 'inline-block px-2 py-1 bg-blue-500 text-blue-800 rounded',
+                                                    'guest' => 'inline-block px-2 py-1 bg-gray-500 text-gray-800 rounded', // Added guest role color
                                                     default => 'bg-gray-200 text-gray-700',
                                                 };
                                             @endphp
-            
+
                                             <span class="text-xs {{ $bgColor }} px-2 py-1 rounded-full ml-2">
-                                                {{ $comment->user->role }}
+                                                {{ $comment->display_role }}
                                             </span>
                                         </p>
-                                        
-                                        @if((auth()->user()->id === $comment->user_id || auth()->user()->role === 'admin') && !$comment->isDeleted())
+
+                                        @if(auth()->check() && (auth()->user()->id === $comment->user_id || auth()->user()->role === 'admin') && !$comment->isDeleted())
                                             <div class="relative inline-block text-left">
                                                 <div>
                                                     <button type="button" class="inline-flex justify-center w-8 h-8 rounded-full border border-gray-300 shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500" id="comment-options-menu-{{ $comment->id }}" aria-haspopup="true" aria-expanded="true">
@@ -164,22 +174,22 @@
                                             </div>
                                         @endif
                                     </div>
-                                    
+
                                     <div class="flex items-center text-xs text-gray-500 mt-1">
                                         <span>{{ $comment->created_at->format('M d, Y h:i A') }}</span>
-                                        
+
                                         @if($comment->isEdited())
                                             <span class="ml-2 italic">
-                                                • edited by {{ $comment->editor->id === $comment->user_id ? $comment->user->name : 'admin: ' . $comment->editor->name }} 
+                                                • edited by {{ $comment->editor->id === $comment->user_id ? $comment->user_display_name : 'admin: ' . $comment->editor->name }}
                                                 at {{ $comment->edited_at->format('M d, Y h:i A') }}
                                             </span>
                                         @endif
                                     </div>
-                                    
+
                                     <div class="text-sm text-gray-700 mt-2">
                                         @if($comment->isDeleted())
                                             <p class="italic text-gray-500">
-                                                Comment deleted by {{ $comment->deleter->id === $comment->user_id ? $comment->user->name : 'admin: ' . $comment->deleter->name }}
+                                                Comment deleted by {{ $comment->deleter->id === $comment->user_id ? $comment->user_display_name : 'admin: ' . $comment->deleter->name }}
                                                 at {{ $comment->deleted_at->format('M d, Y h:i A') }}
                                             </p>
                                         @else
@@ -206,6 +216,15 @@
                     </div>
                 </div>
                 <div class="text-red-500 text-sm mt-2 ml-11 hidden"></div>
+                @auth {{-- Only show anonymous option if user is logged in --}}
+                <div class="mt-2 flex items-center ml-11">
+                    <input type="hidden" name="is_anonymous" value="0"> {{-- Hidden field for unchecked state --}}
+                    <input type="checkbox" name="is_anonymous" id="is_anonymous_comment" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="is_anonymous_comment" class="ml-2 block text-sm text-gray-900">
+                        Post anonymously
+                    </label>
+                </div>
+                @endauth
                 <div class="flex justify-end mt-2">
                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Post Comment
@@ -227,7 +246,7 @@
                 function updateButtonState(button, isReacted) {
                     const type = button.dataset.type;
                     const icon = button.querySelector('svg');
-                    
+
                     if (isReacted) {
                         icon.style.color = type === 'upvote' ? "blue" : "red";
                     } else {
@@ -241,6 +260,8 @@
                     const countSpan = button.querySelector(`.${type}-count`);
 
                     // Set initial state
+                    // Only fetch reaction status if user is authenticated
+                    @auth
                     fetch(`/threads/${threadId}/reaction-status`, {
                         method: 'GET',
                         headers: {
@@ -253,9 +274,15 @@
                         updateButtonState(button, data[type]);
                     })
                     .catch(error => console.error('Error:', error));
+                    @endauth
 
                     // Add click event listener
                     button.addEventListener('click', function() {
+                        // Only allow reaction if not disabled (i.e., user is authenticated)
+                        if (this.disabled) {
+                            return;
+                        }
+
                         fetch(`/threads/${threadId}/react`, {
                             method: 'POST',
                             headers: {
@@ -309,39 +336,39 @@
             document.addEventListener('DOMContentLoaded', function() {
             // Handle all dropdown menus (both thread and comment)
             const dropdownButtons = document.querySelectorAll('[id^="options-menu-"], [id^="comment-options-menu-"]');
-            
+
             dropdownButtons.forEach(button => {
                 // Extract the ID suffix (could be a thread ID or comment ID)
                 const idParts = button.id.split('-');
                 const idSuffix = idParts.pop();
                 const isComment = button.id.includes('comment');
-                
+
                 // Determine the correct dropdown ID
-                const dropdownId = isComment 
+                const dropdownId = isComment
                     ? `comment-dropdown-menu-${idParts.includes('index') ? 'index-' : ''}${idSuffix}`
                     : `dropdown-menu-${idSuffix}`;
-                    
+
                 const dropdownMenu = document.getElementById(dropdownId);
-                
+
                 if (button && dropdownMenu) {
                     button.addEventListener('click', function(event) {
                         event.stopPropagation();
-                        
+
                         // Close all other dropdowns first
                         document.querySelectorAll('[id^="dropdown-menu-"], [id^="comment-dropdown-menu-"]').forEach(menu => {
                             if (menu.id !== dropdownId) {
                                 menu.classList.add('hidden');
                             }
                         });
-                        
+
                         // Toggle the current dropdown
                         dropdownMenu.classList.toggle('hidden');
-                        
+
                         // Ensure proper positioning and z-index
                         if (!dropdownMenu.classList.contains('hidden')) {
                             // Add these classes when showing the dropdown
                             dropdownMenu.classList.add('z-50');
-                            
+
                             // Check if dropdown would go off-screen to the right
                             const rect = dropdownMenu.getBoundingClientRect();
                             if (rect.right > window.innerWidth) {
@@ -350,13 +377,38 @@
                             }
                         }
                     });
-                    
+
                     // Close the dropdown when clicking outside
                     document.addEventListener('click', function() {
                         dropdownMenu.classList.add('hidden');
                     });
                 }
             });
+        });
+
+        // --- New JavaScript for enabling/disabling submit buttons ---
+
+        // For the single comment form on show.blade.php
+        document.addEventListener('DOMContentLoaded', function() {
+            const commentTextarea = document.querySelector('#comment-form textarea[name="content"]');
+            const commentSubmitButton = document.querySelector('#comment-form button[type="submit"]');
+
+            function updateCommentButtonState() {
+                if (commentTextarea && commentSubmitButton) {
+                    if (commentTextarea.value.trim().length > 0) {
+                        commentSubmitButton.removeAttribute('disabled');
+                        commentSubmitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        commentSubmitButton.setAttribute('disabled', 'disabled');
+                        commentSubmitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            }
+
+            if (commentTextarea) {
+                commentTextarea.addEventListener('input', updateCommentButtonState);
+                updateCommentButtonState(); // Initial check on page load
+            }
         });
         </script>
     @endpush

@@ -16,7 +16,7 @@
             font-size: 0.875rem !important;
             color: #6b7280 !important;
         }
-        
+
         /* Style for the loading spinner */
         .loading-spinner {
             display: inline-block;
@@ -27,7 +27,7 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -49,10 +49,10 @@
                         </button>
                     </div>
                 </form>
-                
+
                 <div class="mb-4 flex flex-wrap items-center gap-2">
                     <span class="text-sm font-medium text-gray-700">Filters:</span>
-                    
+
                     <!-- Role filter dropdown -->
                     <div class="relative inline-block text-left" x-data="{ open: false }">
                         <button @click="open = !open" type="button" class="inline-flex justify-between w-32 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500">
@@ -83,7 +83,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Sort filter dropdown -->
                     <div class="relative inline-block text-left" x-data="{ open: false }">
                         <button @click="open = !open" type="button" class="inline-flex justify-between w-32 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500">
@@ -111,7 +111,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Time filter dropdown -->
                     <div class="relative inline-block text-left" x-data="{ open: false }">
                         <button @click="open = !open" type="button" class="inline-flex justify-between w-32 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500">
@@ -139,7 +139,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Clear filters button -->
                     @if(request('role') || request('sort') || request('time') || request('search'))
                         <a href="{{ route('threads.index') }}" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -161,6 +161,19 @@
                     <textarea name="content" id="content" rows="3" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
                     <div class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
+                <div class="mb-4">
+                    <label for="title" class="block text-sm font-medium text-gray-700">Title (Optional)</label>
+                    <input type="text" name="title" id="title" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="A short title for your post">
+                </div>
+                @auth {{-- Only show anonymous option if user is logged in --}}
+                <div class="mb-4 flex items-center">
+                    <input type="hidden" name="is_anonymous" value="0"> {{-- Hidden field for unchecked state --}}
+                    <input type="checkbox" name="is_anonymous" id="is_anonymous_thread" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="is_anonymous_thread" class="ml-2 block text-sm text-gray-900">
+                        Post anonymously
+                    </label>
+                </div>
+                @endauth
                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Create post
                 </button>
@@ -173,23 +186,28 @@
                     <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <div class="flex items-center space-x-3">
-                                <img src="{{ $thread->user->profile?->profile_picture_url ?? $thread->user->profile_photo_url }}" alt="{{ $thread->user->name }}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-300">
+                                <img src="{{ $thread->display_profile_picture_url }}" alt="{{ $thread->user_display_name }}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-300">
                                 <div>
                                     <h4 class="text-lg font-semibold text-gray-900">
-                                        <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
-                                            {{ $thread->user->name }}
-                                        </a>
+                                        @if(!$thread->is_anonymous)
+                                            <a href="{{ route('alumni.profile.show', $thread->user) }}" class="hover:underline">
+                                                {{ $thread->user_display_name }}
+                                            </a>
+                                        @else
+                                            {{ $thread->user_display_name }}
+                                        @endif
                                         @php
-                                        $bgColor = match($thread->user->role) {
+                                        $bgColor = match($thread->display_role) {
                                             'alumni' => 'inline-block px-2 py-1 bg-green-500 text-green-800 rounded',
                                             'admin' => 'text-white inline-block px-2 py-1 bg-red-500 text-red-800 rounded',
                                             'student' => 'inline-block px-2 py-1 bg-blue-500 text-blue-800 rounded',
+                                            'guest' => 'inline-block px-2 py-1 bg-gray-500 text-gray-800 rounded', // Added guest role color
                                             default => 'bg-gray-200 text-gray-700',
                                         };
                                         @endphp
 
                                         <span class="text-sm font-normal {{ $bgColor }} px-2 py-1 rounded-full ml-2">
-                                            {{ $thread->user->role }}
+                                            {{ $thread->display_role }}
                                         </span>
                                     </h4>
                                     <p class="text-sm text-gray-500">
@@ -197,7 +215,7 @@
                                     </p>
                                 </div>
                             </div>
-                            @if(auth()->user()->id === $thread->user_id || auth()->user()->role === 'admin')
+                            @if(auth()->check() && (auth()->user()->id === $thread->user_id || auth()->user()->role === 'admin'))
                                 <div class="relative inline-block text-left">
                                     <div>
                                         <button type="button" class="inline-flex justify-center w-8 h-8 rounded-full border border-gray-300 shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500" id="options-menu-{{ $thread->id }}" aria-haspopup="true" aria-expanded="true">
@@ -227,29 +245,31 @@
                         <div class="flex space-x-4">
                             @php
                                 $user = auth()->user();
-                                $userUpvoted = $thread->reactions()->where('user_id', $user->id)->where('type', 'upvote')->exists();
-                                $userHearted = $thread->reactions()->where('user_id', $user->id)->where('type', 'heart')->exists();
+                                $userUpvoted = $user ? $thread->reactions()->where('user_id', $user->id)->where('type', 'upvote')->exists() : false;
+                                $userHearted = $user ? $thread->reactions()->where('user_id', $user->id)->where('type', 'heart')->exists() : false;
                             @endphp
 
-                            <button class="react-btn flex items-center space-x-1 text-gray-500" 
-                                    data-type="upvote" 
-                                    data-thread="{{ $thread->id }}" 
-                                    data-reacted="{{ $userUpvoted ? 'true' : 'false' }}">
+                            <button class="react-btn flex items-center space-x-1 text-gray-500"
+                                    data-type="upvote"
+                                    data-thread="{{ $thread->id }}"
+                                    data-reacted="{{ $userUpvoted ? 'true' : 'false' }}"
+                                    @guest disabled @endguest> {{-- Disable if guest --}}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 upvote-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                                 </svg>
                                 <span class="upvote-count-{{ $thread->id }}">{{ $thread->upvotes }}</span>
                             </button>
-                            
-                            <button class="react-btn flex items-center space-x-1 text-gray-500 ml-2" 
-                                    data-type="heart" 
-                                    data-thread="{{ $thread->id }}" 
-                                    data-reacted="{{ $userHearted ? 'true' : 'false' }}">
+
+                            <button class="react-btn flex items-center space-x-1 text-gray-500 ml-2"
+                                    data-type="heart"
+                                    data-thread="{{ $thread->id }}"
+                                    data-reacted="{{ $userHearted ? 'true' : 'false' }}"
+                                    @guest disabled @endguest> {{-- Disable if guest --}}
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 heart-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                 </svg>
                                 <span class="heart-count-{{ $thread->id }}">{{ $thread->hearts }}</span>
-                            </button>                    
+                            </button>
 
                         </div>
                         <button @click="isCommentsOpen = !isCommentsOpen" class="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors duration-200">
@@ -262,41 +282,46 @@
                     <div x-show="isCommentsOpen" class="px-6 py-4 bg-gray-100">
                         @foreach ($thread->comments as $comment)
                         <div class="flex items-start space-x-3 mb-4">
-                            <img src="{{ $comment->user->profile?->profile_picture_url ?? $comment->user->profile_photo_url }}" alt="{{ $comment->user->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300">
+                            <img src="{{ $comment->display_profile_picture_url }}" alt="{{ $comment->user_display_name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300">
                             <div class="flex-grow">
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <p class="font-semibold text-gray-900">
-                                            <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
-                                                {{ $comment->user->name }}
-                                            </a>
+                                            @if(!$comment->is_anonymous)
+                                                <a href="{{ route('alumni.profile.show', $comment->user) }}" class="hover:underline">
+                                                    {{ $comment->user_display_name }}
+                                                </a>
+                                            @else
+                                                {{ $comment->user_display_name }}
+                                            @endif
                                             @php
-                                                $bgColor = match($comment->user->role) {
+                                                $bgColor = match($comment->display_role) {
                                                     'alumni' => 'bg-green-200 text-green-800',
                                                     'admin' => 'bg-red-200 text-red-800',
                                                     'student' => 'bg-blue-200 text-blue-800',
+                                                    'guest' => 'bg-gray-200 text-gray-700', // Added guest role color
                                                     default => 'bg-gray-200 text-gray-700',
                                                 };
                                             @endphp
 
                                             <span class="text-xs {{ $bgColor }} px-2 py-1 rounded-full ml-2">
-                                                {{ $comment->user->role }}
+                                                {{ $comment->display_role }}
                                             </span>
                                         </p>
                                         <p class="text-xs text-gray-500 mt-1">
                                             {{ $comment->created_at->format('M d, Y h:i A') }}
-                                            
+
                                             @if($comment->isEdited())
                                                 <span class="ml-2 italic">
-                                                    • edited by {{ $comment->editor->id === $comment->user_id ? $comment->user->name : 'admin: ' . $comment->editor->name }} 
+                                                    • edited by {{ $comment->editor->id === $comment->user_id ? $comment->user_display_name : 'admin: ' . $comment->editor->name }}
                                                     at {{ $comment->edited_at->format('M d, Y h:i A') }}
                                                 </span>
                                             @endif
                                         </p>
                                     </div>
-                                    
+
                                     <!-- Moved dropdown to top right -->
-                                    @if((auth()->user()->id === $comment->user_id || auth()->user()->role === 'admin') && !$comment->isDeleted())
+                                    @if(auth()->check() && (auth()->user()->id === $comment->user_id || auth()->user()->role === 'admin'))
                                         <div class="relative">
                                             <button type="button" class="inline-flex justify-center w-6 h-6 rounded-full border border-gray-300 shadow-sm bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-offset-gray-100 focus:ring-indigo-500" id="comment-options-menu-index-{{ $comment->id }}">
                                                 <svg class="w-4 h-4 m-auto" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -317,11 +342,11 @@
                                         </div>
                                     @endif
                                 </div>
-                                
+
                                 <div class="text-sm text-gray-700 mt-2">
                                     @if($comment->isDeleted())
                                         <p class="italic text-gray-500">
-                                            Comment deleted by {{ $comment->deleter->id === $comment->user_id ? $comment->user->name : 'admin: ' . $comment->deleter->name }}
+                                            Comment deleted by {{ $comment->deleter->id === $comment->user_id ? $comment->user_display_name : 'admin: ' . $comment->deleter->name }}
                                             at {{ $comment->deleted_at->format('M d, Y h:i A') }}
                                         </p>
                                     @else
@@ -331,21 +356,28 @@
                             </div>
                         </div>
                     @endforeach
-                        <form action="{{ route('threads.comments.store', $thread) }}" method="POST" class="mt-4">
+                        <form action="{{ route('threads.comments.store', $thread) }}" method="POST" id="comment-form-{{ $thread->id }}" class="mt-4"> {{-- Added unique ID --}}
                             @csrf
-                            <div class="flex flex-col w-full">
-                                <div class="flex items-start space-x-3">
-                                    <img src="{{ auth()->user()->profile?->profile_picture_url ?? auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300 flex-shrink-0">
-                                    <div class="flex-grow">
-                                        <textarea name="content" placeholder="Write a comment..." class="w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 block shadow-sm sm:text-sm border rounded-md"></textarea>
-                                    </div>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                                <img src="{{ auth()->user()->profile?->profile_picture_url ?? auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover border-2 border-gray-300">
+                                <div class="flex-grow">
+                                    <textarea name="content" placeholder="Write a comment..." class="flex-grow border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border rounded-md"></textarea>
+                                    <div class="text-red-500 text-sm mt-1 hidden"></div>
                                 </div>
-                                <div class="text-red-500 text-sm mt-2 ml-11 hidden"></div>
-                                <div class="flex justify-end mt-2">
-                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        Comment
-                                    </button>
-                                </div>
+                            </div>
+                            @auth {{-- Only show anonymous option if user is logged in --}}
+                            <div class="mt-2 flex items-center ml-11"> {{-- Adjust margin-left to align with textarea --}}
+                                <input type="hidden" name="is_anonymous" value="0"> {{-- Hidden field for unchecked state --}}
+                                <input type="checkbox" name="is_anonymous" id="is_anonymous_comment_{{ $thread->id }}" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                <label for="is_anonymous_comment_{{ $thread->id }}" class="ml-2 block text-sm text-gray-900">
+                                    Post anonymously
+                                </label>
+                            </div>
+                            @endauth
+                            <div class="flex justify-end mt-2">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 opacity-50 cursor-not-allowed" disabled>
+                                    Comment
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -355,7 +387,7 @@
             {{ $threads->links() }}
         </div>
     </div>
-  
+
   @push('scripts')
       <script src="{{ asset('js/word-counter.js') }}"></script>
       <script>
@@ -365,7 +397,7 @@
               function updateButtonState(button, isReacted) {
                   const type = button.dataset.type;
                   const icon = button.querySelector(type === 'upvote' ? '.upvote-icon' : '.heart-icon');
-                  
+
                   if (isReacted) {
                       icon.style.color = type === 'upvote' ? "blue" : "red";
                   } else {
@@ -380,10 +412,29 @@
                   const heartCount = document.querySelector(`.heart-count-${threadId}`);
 
                   // Set initial state
-                  updateButtonState(button, button.dataset.reacted === 'true');
+                  // Only fetch reaction status if user is authenticated
+                  @auth
+                  fetch(`/threads/${threadId}/reaction-status`, {
+                      method: 'GET',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'X-CSRF-TOKEN': csrfToken
+                      }
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                      updateButtonState(button, data[type]);
+                  })
+                  .catch(error => console.error('Error:', error));
+                  @endauth
 
                   // Add click event listener
                   button.addEventListener('click', function() {
+                      // Only allow reaction if not disabled (i.e., user is authenticated)
+                      if (this.disabled) {
+                          return;
+                      }
+
                       fetch(`/threads/${threadId}/react`, {
                           method: 'POST',
                           headers: {
@@ -432,11 +483,11 @@
           document.addEventListener('DOMContentLoaded', function() {
           // Handle all dropdown menus
           const dropdownButtons = document.querySelectorAll('[id^="comment-options-menu-"]');
-          
+
           dropdownButtons.forEach(button => {
               const id = button.id;
               let dropdownId;
-              
+
               // Determine the correct dropdown ID based on the button ID
               if (id.startsWith('comment-options-menu-index-')) {
                   dropdownId = id.replace('comment-options-menu-index-', 'comment-dropdown-menu-index-');
@@ -445,35 +496,35 @@
               } else if (id.startsWith('options-menu-')) {
                   dropdownId = id.replace('options-menu-', 'dropdown-menu-');
               }
-              
+
               const dropdownMenu = document.getElementById(dropdownId);
-              
+
               if (button && dropdownMenu) {
                   button.addEventListener('click', function(event) {
                       event.stopPropagation();
-                      
+
                       // Close all other dropdowns first
                       document.querySelectorAll('.comment-dropdown-menu, [id^="dropdown-menu-"]').forEach(menu => {
                           if (menu.id !== dropdownId) {
                               menu.classList.add('hidden');
                           }
                       });
-                      
+
                       // Toggle the current dropdown
                       dropdownMenu.classList.toggle('hidden');
-                      
+
                       // Check if dropdown would go off-screen to the right
                       if (!dropdownMenu.classList.contains('hidden')) {
                           const rect = dropdownMenu.getBoundingClientRect();
                           const parentRect = button.parentElement.getBoundingClientRect();
-                          
+
                           // If dropdown would go off right edge of screen
                           if (rect.right > window.innerWidth) {
                               dropdownMenu.classList.add('dropdown-right');
                           } else {
                               dropdownMenu.classList.remove('dropdown-right');
                           }
-                          
+
                           // If dropdown would go off bottom of screen, position it above the button
                           if (rect.bottom > window.innerHeight) {
                               dropdownMenu.style.bottom = parentRect.height + 'px';
@@ -485,7 +536,7 @@
                       }
                   });
               }
-              
+
               // Close dropdowns when clicking outside
               document.addEventListener('click', function(event) {
                   if (!button.contains(event.target)) {
@@ -493,7 +544,52 @@
                   }
               });
           });
-      });
+
+          // --- New JavaScript for enabling/disabling submit buttons ---
+
+          // For the main thread creation form
+          const threadContentTextarea = document.querySelector('#thread-form textarea[name="content"]');
+          const threadSubmitButton = document.querySelector('#thread-form button[type="submit"]');
+
+          function updateThreadButtonState() {
+              if (threadContentTextarea && threadSubmitButton) {
+                  if (threadContentTextarea.value.trim().length > 0) {
+                      threadSubmitButton.removeAttribute('disabled');
+                      threadSubmitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                  } else {
+                      threadSubmitButton.setAttribute('disabled', 'disabled');
+                      threadSubmitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                  }
+              }
+          }
+
+          if (threadContentTextarea) {
+              threadContentTextarea.addEventListener('input', updateThreadButtonState);
+              updateThreadButtonState(); // Initial check on page load
+          }
+
+          // For all comment forms (in the loop)
+          document.querySelectorAll('form[id^="comment-form-"]').forEach(form => {
+              const commentTextarea = form.querySelector('textarea[name="content"]');
+              const commentSubmitButton = form.querySelector('button[type="submit"]');
+
+              function updateCommentButtonState() {
+                  if (commentTextarea && commentSubmitButton) {
+                      if (commentTextarea.value.trim().length > 0) {
+                          commentSubmitButton.removeAttribute('disabled');
+                          commentSubmitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                      } else {
+                          commentSubmitButton.setAttribute('disabled', 'disabled');
+                          commentSubmitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                      }
+                  }
+              }
+
+              if (commentTextarea) {
+                  commentTextarea.addEventListener('input', updateCommentButtonState);
+                  updateCommentButtonState(); // Initial check on page load
+              }
+          });
       </script>
   @endpush
 </x-app-layout>
