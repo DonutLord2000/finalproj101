@@ -4,11 +4,13 @@
             {{ __('Dashboard') }}
         </h2>
     </x-slot>
+    @if(auth()->user()->role === 'admin')
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <x-alumni-tracker />
         </div>
     </div>
+    @endif
     <!-- CHART FOR ALUMNI -->
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
