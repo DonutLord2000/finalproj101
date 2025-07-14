@@ -8,6 +8,15 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <x-alumni-tracker />
+            <div id="analysis-results" class="py-12">
+                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg p-8">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-8">Analysis Results</h2>
+                        <!-- Your analysis results will be rendered here -->
+                        <p>This section will display the individual or group analysis results.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     @endif
@@ -473,6 +482,32 @@
                             }
                         }
                     }
+                });
+            }
+  
+            // Function to scroll to the analysis results section
+            function scrollToAnalysisResults() {
+                const analysisResultsSection = document.getElementById('analysis-results');
+                if (analysisResultsSection) {
+                    analysisResultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+  
+            // Listen for clicks on the individual analysis button
+            const individualAnalysisBtn = document.getElementById('individual-analysis-btn');
+            if (individualAnalysisBtn) {
+                individualAnalysisBtn.addEventListener('click', function() {
+                    // You might want to add a small delay if the results load asynchronously
+                    setTimeout(scrollToAnalysisResults, 300); // Adjust delay as needed
+                });
+            }
+  
+            // Listen for clicks on the group analysis button
+            const groupAnalysisBtn = document.getElementById('group-analysis-btn');
+            if (groupAnalysisBtn) {
+                groupAnalysisBtn.addEventListener('click', function() {
+                    // You might want to add a small delay if the results load asynchronously
+                    setTimeout(scrollToAnalysisResults, 300); // Adjust delay as needed
                 });
             }
         });

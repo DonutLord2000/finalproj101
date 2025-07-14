@@ -194,7 +194,7 @@
     </div>
 
     <!-- AI Insights Display -->
-    <div class="mt-6 p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-md border border-gray-200">
+    <div class="mt-6 p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-md border border-gray-200" id="analysis-results">
         <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -766,6 +766,14 @@
             }
         }
 
+        // Function to scroll to the analysis results section
+        function scrollToAnalysisResults() {
+            const analysisResultsSection = document.getElementById('analysis-results');
+            if (analysisResultsSection) {
+                analysisResultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
         // Event listener for Apply Filters button
         applyFiltersBtn.addEventListener('click', function() {
             selectedAlumniId = null; // Clear individual alumni selection
@@ -785,7 +793,9 @@
                 salary_from: document.getElementById('toggle_salary_filter').checked ? salaryFromSlider.value : '',
                 salary_to: document.getElementById('toggle_salary_filter').checked ? salaryToSlider.value : '',
             };
-            fetchInsights(params, false); // Not an individual search
+            fetchInsights(params, false).then(() => {
+                setTimeout(scrollToAnalysisResults, 300); // Scroll after insights are fetched
+            });
         });
 
         // Event listener for Alumni Search Input (Autocomplete)
@@ -849,7 +859,9 @@
             }
 
             if (selectedAlumniId) {
-                fetchInsights({ alumni_id: selectedAlumniId }, true); // Is an individual search
+                fetchInsights({ alumni_id: selectedAlumniId }, true).then(() => {
+                    setTimeout(scrollToAnalysisResults, 300); // Scroll after insights are fetched
+                });
             } else if (alumniSearchInput.value.trim() !== '') {
                 aiInsightsDisplay.innerHTML = ''; // Clear previous content
                 aiInsightsError.textContent = 'Please select an alumni from the dropdown suggestions.';
